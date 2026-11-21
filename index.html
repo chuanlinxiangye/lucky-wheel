@@ -705,7 +705,7 @@
         <li><b>重命名</b>：双击标签名或双击选项名，直接改字。</li>
         <li><b>排序</b>：选项右侧的「↑ ↓」调整谁在前谁在后，转盘扇区跟着变。</li>
         <li><b>跳转</b>：点选项旁的「🔗」，可以设置转到这个选项后跳去别的转盘，或跳去硬币/骰子/数字工具页。转中后弹窗里会出现跳转按钮。</li>
-        <li><b>扇形贴图</b>：点选项旁的「🖼」，选一张图，在裁剪编辑器里拖动/缩放/旋转/翻转，确认后图片就贴进那个扇形。再点一次可选「更换」或「清除」。</li>
+        <li><b>扇形贴图</b>：点选项旁的「🖼」，选一张图后进入裁剪编辑器——注意编辑器里的亮色区域就是<b>这个扇形的真实形状</b>（一张披萨切片的楔形，张角按当前选项数自动算，比如 6 个选项就是 60°），亮区里看到什么，转到轮盘上就是什么。拖动平移、双指捏合缩放、旋转/翻转都只让图片在这块扇形里动（扇形的形状由转盘决定，不会跟着转，否则贴回去就对不上槽位了）。确认后图片贴进那个扇形；再点一次可选「更换」或「清除」。</li>
         <li><b>主题换肤</b>：在「⚙️ 设置」抽屉里下拉切换 10 种配色，整页按钮、指针、中心点都会跟着变色。「新建主题」可选多色自选或单色渐变（选一个颜色自动生成深浅，选项越多渐变越顺滑）。</li>
         <li><b>音效</b>：转动、抛硬币、摇骰子、切页面都有声音，详见下面「🔊 音效」一节。</li>
         <li><b>淘汰制</b>：勾选「转中后自动移除该选项」，适合多人轮流淘汰。</li>
@@ -2715,6 +2715,9 @@ let cropState = null;
 let cropTargetSize = 512;
 /** @type {((dataUrl: string) => void) | null} */
 let cropOnDone = null;
+/** 参考框形状：扇形（转盘扇区）或圆形（硬币正反面） */
+/** @type {{ kind: 'circle' } | { kind: 'wedge', angle: number }} */
+let cropShape = { kind: 'circle' };
 
 const cropCanvas = /** @type {HTMLCanvasElement} */ (document.getElementById('crop-canvas'));
 const cropCtx = /** @type {CanvasRenderingContext2D} */ (cropCanvas.getContext('2d'));
@@ -2740,8 +2743,8 @@ function clampCrop() {
   cropState.oy = Math.max(-maxY, Math.min(maxY, cropState.oy));
 }
 
-/** 把当前裁剪状态画到指定尺寸的画布上下文（显示与导出共用） */
-function drawCropInto(ctx, V) {
+/** 只画图片本身（不含任何参考框/遮罩），导出时用这个保证不把遮罩烤进图里 */
+function paintCropImage(ctx, V) {
   if (!cropState) return;
   const s = cropState;
   const { w: effW, h: effH } = cropEffDims();
@@ -2755,31 +2758,62 @@ function drawCropInto(ctx, V) {
   ctx.scale(s.fh ? -scale : scale, s.fv ? -scale : scale);
   ctx.drawImage(s.img, -s.img.width / 2, -s.img.height / 2);
   ctx.restore();
-  // 圆形参考框：对应硬币/盘面的实际显示形状
+}
+
+/** 把当前裁剪状态画到指定尺寸的画布上下文（显示用）；shape 决定参考框形状 */
+function drawCropInto(ctx, V, shape) {
+  if (!cropState) return;
+  paintCropImage(ctx, V);
+
+  const sh = shape || { kind: 'circle' };
   ctx.save();
-  ctx.beginPath();
-  ctx.rect(0, 0, V, V);
-  ctx.arc(V / 2, V / 2, V * 0.42, 0, TAU, true);
-  ctx.fillStyle = 'rgba(0,0,0,0.45)';
-  ctx.fill('evenodd');
-  ctx.beginPath();
-  ctx.arc(V / 2, V / 2, V * 0.42, 0, TAU);
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = Math.max(2, V / 80);
-  ctx.stroke();
+  if (sh.kind === 'wedge') {
+    // 扇形：顶点在画布中心、半径 V/2，张角与轮盘上那个扇区完全一致
+    const angle = sh.angle;
+    const start = -Math.PI / 2 - angle / 2;
+    const end = start + angle;
+    ctx.beginPath();
+    ctx.rect(0, 0, V, V);
+    ctx.moveTo(V / 2, V / 2);
+    ctx.arc(V / 2, V / 2, V / 2, start, end);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(0,0,0,0.58)';
+    ctx.fill('evenodd');
+    // 扇形轮廓 + 圆心到边缘的分隔线
+    ctx.beginPath();
+    ctx.moveTo(V / 2, V / 2);
+    ctx.arc(V / 2, V / 2, V / 2 - 1, start, end);
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.lineWidth = Math.max(2, V / 140);
+    ctx.stroke();
+  } else {
+    // 圆形（硬币正反面用）
+    ctx.beginPath();
+    ctx.rect(0, 0, V, V);
+    ctx.arc(V / 2, V / 2, V * 0.42, 0, TAU, true);
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fill('evenodd');
+    ctx.beginPath();
+    ctx.arc(V / 2, V / 2, V * 0.42, 0, TAU);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = Math.max(2, V / 80);
+    ctx.stroke();
+  }
   ctx.restore();
 }
 
 function drawCrop() {
-  drawCropInto(cropCtx, cropCanvas.width);
+  drawCropInto(cropCtx, cropCanvas.width, cropShape);
 }
 
 /** 打开裁剪编辑器：file → 编辑 → onDone(dataURL) */
-function openCropEditor(file, targetSize, onDone) {
+function openCropEditor(file, targetSize, onDone, shape) {
   if (!file || !file.type || !file.type.startsWith('image/')) {
     toast('请选择图片文件', true);
     return;
   }
+  cropShape = shape || { kind: 'circle' };
   const url = URL.createObjectURL(file);
   const img = new Image();
   img.onload = function () {
@@ -2788,6 +2822,16 @@ function openCropEditor(file, targetSize, onDone) {
     cropTargetSize = targetSize;
     cropOnDone = onDone;
     cropZoomSlider.value = '1';
+    // 提示文案跟着形状走：扇形要说清张角，圆形就是硬币
+    const hint = document.querySelector('.crop-hint');
+    if (hint) {
+      if (cropShape.kind === 'wedge') {
+        const deg = Math.round(cropShape.angle * 180 / Math.PI);
+        hint.textContent = '亮色扇形区域内就是最终效果（当前 ' + Math.round(TAU / cropShape.angle) + ' 个选项，张角 ' + deg + '°）· 拖动/缩放/旋转只会让图片在扇形里动 · 手机上双指捏合缩放';
+      } else {
+        hint.textContent = '圆形区域内是最终效果 · 拖动图片调整位置 · 手机上双指捏合缩放';
+      }
+    }
     cropModal.classList.add('show');
     drawCrop();
   };
@@ -2838,7 +2882,8 @@ document.getElementById('btn-crop-ok').addEventListener('click', function () {
   const out = document.createElement('canvas');
   out.width = cropTargetSize;
   out.height = cropTargetSize;
-  /** @type {CanvasRenderingContext2D} */ (out.getContext('2d')).drawImage(cropCanvas, 0, 0, cropTargetSize, cropTargetSize);
+  // 只导出图片，不烤进参考框的黑色遮罩
+  paintCropImage(/** @type {CanvasRenderingContext2D} */ (out.getContext('2d')), cropTargetSize);
   const dataUrl = out.toDataURL('image/jpeg', 0.82);
   const cb = cropOnDone;
   closeCropEditor();
@@ -2914,7 +2959,9 @@ document.getElementById('item-img-file').addEventListener('change', function (e)
   const file = input.files && input.files[0];
   if (!file || !pendingItemImgId) return;
   const itemId = pendingItemImgId;
-  openCropEditor(file, 320, function (dataUrl) { setItemImg(itemId, dataUrl); });
+  // 传当前扇形的真实张角，让裁剪窗口就是他看到的那个楔形
+  const sliceAngle = TAU / Math.max(2, currentTab().items.length);
+  openCropEditor(file, 320, function (dataUrl) { setItemImg(itemId, dataUrl); }, { kind: 'wedge', angle: sliceAngle });
   input.value = '';
 });
 
