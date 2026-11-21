@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.chuanlinxiangye.luckywheel",
+        "sha256_cert_fingerprints": ["91:B3:CD:4C:1F:F7:33:55:E4:F7:F6:25:EB:FC:C5:4A:6F:A7:EC:69:32:B1:80:60:28:C8:27:53:C6:FE:92:92"]
+      }
+    }]
