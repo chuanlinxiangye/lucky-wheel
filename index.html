@@ -767,13 +767,22 @@
 
   <section>
     <h2>分享当前转盘</h2>
-    <button id="btn-gen-code" class="ghost">生成分享码</button>
+    <label class="checkbox-row">
+      <input type="checkbox" id="share-with-img" checked>
+      连扇形贴图和硬币图片一起分享
+    </label>
+    <label class="checkbox-row">
+      <input type="checkbox" id="share-with-sfx" checked>
+      连自定义音效、音效风格和音量一起分享
+    </label>
+    <button id="btn-gen-code" class="ghost" style="margin-top:10px">生成分享码</button>
     <textarea id="share-code" class="code-box" readonly placeholder="点上面的按钮生成分享码" style="display:none;margin-top:8px"></textarea>
     <p id="share-info" class="muted" style="display:none;margin-top:6px"></p>
     <div class="share-tools" id="share-tools" style="display:none">
       <button id="btn-copy-code" class="small">复制分享码</button>
+      <button id="btn-save-pack" class="ghost small">存成文件</button>
     </div>
-    <p class="muted" style="margin-top:8px">分享码自动包含当前转盘和跳转链上的所有转盘（🔗 关联的算一组），以及各自的配色主题；盘面图片和硬币图片体积大，不包含在分享码里。</p>
+    <p class="muted" style="margin-top:8px">分享码默认把当前转盘和跳转链上的所有转盘（🔗 关联的算一组）打包，<b>连图片和音效一起</b>，对方导入后看到听到的和你一模一样。带图片音频后码会变长，太长的话用「存成文件」发文件更稳。</p>
   </section>
 
   <section>
@@ -781,7 +790,9 @@
     <textarea id="import-code" class="code-box" placeholder="粘贴别人发给你的分享码"></textarea>
     <div class="share-tools">
       <button id="btn-import">导入为新转盘</button>
+      <button id="btn-load-pack" class="ghost small">从文件导入</button>
     </div>
+    <input type="file" id="pack-file" accept=".txt,.json,text/plain,application/json" style="display:none">
   </section>
 </aside>
 
@@ -869,7 +880,7 @@
         <li><b>主题换肤</b>：在「⚙️ 设置」抽屉里下拉切换 10 种配色，整页按钮、指针、中心点都会跟着变色。「新建主题」可选多色自选或单色渐变（选一个颜色自动生成深浅，选项越多渐变越顺滑）。</li>
         <li><b>音效</b>：转动、抛硬币、摇骰子、切页面都有声音，详见下面「🔊 音效」一节。</li>
         <li><b>淘汰制</b>：勾选「转中后自动移除该选项」，适合多人轮流淘汰。</li>
-        <li><b>分享</b>：「生成分享码」会把当前转盘和它跳转链上的所有转盘打包成一串码，发给朋友；对方在「导入转盘」里粘贴即可得到一模一样的转盘（配色也带上）。</li>
+        <li><b>分享</b>：「生成分享码」会把当前转盘和它跳转链上的所有转盘打包成一串码，发给朋友；对方在「导入转盘」里粘贴即可得到一模一样的转盘——<b>配色、扇形贴图、硬币正反面、自定义音效、音效风格和音量都一起带过去</b>。上面两个勾选框可以决定要不要连图片、连音效，纯文字分享就把两个都取消。带图片音频的码会比较长，选择「存成文件」发 .txt 比复制粘贴更稳。</li>
       </ul>
 
       <h3>🪙 硬币</h3>
@@ -907,7 +918,7 @@
         <li><b>换成自己的音频</b>：「⚙️ 设置 → 自定义音效」里，五个动作（转出结果 / 转盘跳齿 / 抛硬币 / 丢骰子 / 点击切换）可以分别导入本地文件替换。每行有「🎵 导入」「试听」「✕ 恢复默认」。</li>
         <li><b>支持格式</b>：<b>MP3 最稳</b>（推荐）；WAV、M4A/AAC 也可以；OGG 在 Chrome 上能用但 iPhone 的 Safari 不行；<b>MP4 不建议</b>——它是视频容器，浏览器把它当音频播放经常失败，请先转成 MP3。</li>
         <li><b>文件大小</b>：单个文件请在 <b>1MB 以内</b>（最多 1.5MB）。因为音频要存在浏览器本地，而总空间只有 5MB 左右，还要和你导入的扇形贴图共用。超了会拒绝并提示，存储满了会自动回滚，不会把你的设置搞坏。建议掐一段 1~3 秒的高潮部分。</li>
-        <li><b>只在本机生效</b>：自定义音频保存在你这台设备上，<b>分享码不包含音频</b>（体积太大塞不进去），别人导入你的转盘听到的还是内置合成音。</li>
+        <li><b>只在本机生效</b>：自定义音频保存在你这台设备上。生成分享码时勾上「连自定义音效一起分享」，音频也会被打包进去带给对方；不勾就只分享转盘本身。</li>
         <li><b>音量与响度配平</b>：「⚙️ 设置 → 音效」里有两层滑杆。<b>总音量</b>调整体，拖到 <b>0 就是全部静音</b>；下面的<b>各音效单独音量</b>一共 6 根（转出结果 / 转盘跳齿 / 抛硬币 / 丢骰子 / 随机数字 / 点击切换），每根只管自己那一个，旁边有「▶」可以立刻试听，松手也会自动试听一次。哪根觉得偏大就往左拉、偏小往右拉，互不影响；下面的「全部恢复 100%」一键归位。</li>
         <li><b>配平是怎么算的</b>：各音效的相对响度是按实际波形量出来的峰值配平过——<b>点击、跳齿</b>这类高频轻音压在 -20dBFS 左右（听得见但不吵），<b>抛硬币、丢骰子</b>在 -13dBFS，<b>出结果</b>最大、约 -11dBFS。所以不会出现「点一下吓一跳、出结果反而听不清」。滑杆是在这个基础上再乘一层。</li>
         <li><b>导入的音频会自动对齐</b>：给某个动作换了自定义音频后，程序会先量它本身的峰值，再自动抬/压到和内置音效同一量级（约 -10dBFS），所以换一首很响的流行歌也不会炸出来；那个动作的单独滑杆同样管用。</li>
@@ -933,7 +944,7 @@
       <ul>
         <li>所有转盘、主题、图片、自定义音频都自动保存在这台设备的浏览器里，换设备不会同步。</li>
         <li>安装到手机桌面后（浏览器菜单里的「添加到主屏幕」，或页面里的安装按钮），断网也能正常使用。</li>
-        <li>分享码只带选项、权重、配色和跳转关系，不带图片和音频；跳转链接会自动映射到对方设备上的新转盘。</li>
+        <li>分享码可以连图片和音频一起带上（默认带），跳转链接会自动映射到对方设备上的新转盘；带媒体的码会压缩，但码本身会明显变长。</li>
         <li>安卓手机还可以用安装包（APK）装成独立 APP，图标在桌面上、全屏无地址栏；APP 打开的就是网页版本身，所以网页更新了什么，APP 里就有最新的，不用重新安装。</li>
         <li><b>现在是最新版吗</b>：网页每次打开都会先联网取最新页面（断网才用本地缓存），所以正常情况不会落后。如果 APK 或桌面图标里看起来还是旧界面，用「⚙️ 设置 → 版本与更新 → ⟳ 立即更新」清掉本地缓存重载即可；你的转盘、贴图、音效设置都不会丢。</li>
       </ul>
@@ -3663,9 +3674,67 @@ document.getElementById('coin-face-file').addEventListener('change', function (e
   input.value = '';
 });
 
-// ---- 分享转盘（纯离线分享码，v2：整组跳转链一起分享） ----
+// ---- 分享转盘（纯离线分享码：v3 带图片/音效，兼容旧的 v1/v2） ----
 
-const SHARE_PREFIX = 'WHEEL1.';
+const SHARE_PREFIX = 'WHEEL1.';      // 旧格式（不含媒体）
+const SHARE_PREFIX_V3 = 'WHEEL2.';   // 新格式，deflate 压缩
+const SHARE_PREFIX_V3R = 'WHEEL2R.'; // 新格式，浏览器不支持压缩时的裸 JSON
+const SHARE_MAX_CHARS = 8 * 1024 * 1024;
+
+/** 字节 → base64（分块转换，大数组直接 apply 会爆栈） */
+function bytesToB64(bytes) {
+  let bin = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(bin);
+}
+
+function b64ToBytes(b64) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function b64UrlEncode(b64) {
+  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function b64UrlDecode(s) {
+  let b64 = s.replace(/-/g, '+').replace(/_/g, '/');
+  while (b64.length % 4) b64 += '=';
+  return b64;
+}
+
+/** 拆 dataURL → { mime, base64 }；不是 dataURL 返回 null */
+function splitDataUrl(s) {
+  const m = /^data:([a-z0-9.+/-]+);base64,(.*)$/i.exec(String(s || ''));
+  return m ? { t: m[1], d: m[2] } : null;
+}
+
+function joinDataUrl(t, d) {
+  return 'data:' + t + ';base64,' + d;
+}
+
+/** deflate-raw 压缩；浏览器不支持时返回 null（走裸 JSON 通道） */
+async function deflateRaw(bytes) {
+  if (typeof CompressionStream !== 'function') return null;
+  try {
+    const cs = new CompressionStream('deflate-raw');
+    const ab = await new Response(new Blob([bytes]).stream().pipeThrough(cs)).arrayBuffer();
+    return new Uint8Array(ab);
+  } catch (e) {
+    return null;
+  }
+}
+
+async function inflateRaw(bytes) {
+  const ds = new DecompressionStream('deflate-raw');
+  const ab = await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer();
+  return new Uint8Array(ab);
+}
 
 /**
  * 从 startId 出发，沿 linkTabId 收集整个"跳转链集群"
@@ -3693,12 +3762,33 @@ function collectCluster(startId) {
 }
 
 /**
- * 打包分享码：v2 格式，包含跳转链上全部转盘；跳转关系用组内序号表示，导入时重映射
- * @returns {{ code: string, names: string[] }}
+ * 打包分享码：v3 格式，包含跳转链上全部转盘 + 扇形贴图 + 硬币图片 + 自定义音效与音量设置
+ * 媒体统一放进 m 字典并按内容去重（同一张图贴多个扇形只存一份），跳转关系用组内序号表示
+ * @param {{ img?: boolean, sfx?: boolean }} [opts]
+ * @returns {Promise<{ code: string, names: string[], chars: number, media: number, compressed: boolean }>}
  */
-function buildShareCode() {
+async function buildShareCode(opts) {
+  const withImg = !opts || opts.img !== false;
+  const withSfx = !opts || opts.sfx !== false;
   const cluster = collectCluster(currentTab().id);
   const idxById = new Map(cluster.map(function (w, i) { return [w.id, i]; }));
+
+  /** @type {Record<string, { t: string, d: string }>} */
+  const media = {};
+  /** @type {Map<string, string>} */
+  const mediaIndex = new Map();
+  /** @type {(dataUrl: string | undefined | null) => string | undefined} */
+  function addMedia(dataUrl) {
+    if (!dataUrl) return undefined;
+    if (mediaIndex.has(dataUrl)) return mediaIndex.get(dataUrl);
+    const sp = splitDataUrl(dataUrl);
+    if (!sp) return undefined;
+    const key = 'm' + (mediaIndex.size + 1);
+    media[key] = { t: sp.t, d: sp.d };
+    mediaIndex.set(dataUrl, key);
+    return key;
+  }
+
   /** @type {Record<string, { n: string, c: string[], g?: string }>} */
   const themes = {};
   const wheels = cluster.map(function (w) {
@@ -3715,76 +3805,182 @@ function buildShareCode() {
         let linkMark = -1;
         if (it.linkTabId && it.linkTabId.startsWith('tool:')) linkMark = it.linkTabId;
         else if (it.linkTabId && idxById.has(it.linkTabId)) linkMark = idxById.get(it.linkTabId);
-        return [it.name, it.weight, linkMark];
+        const imgKey = withImg && it.img ? addMedia(it.img) : undefined;
+        return imgKey ? [it.name, it.weight, linkMark, imgKey] : [it.name, it.weight, linkMark];
       }),
     };
   });
-  const payload = { v: 2, w: wheels };
+
+  const payload = { v: 3, w: wheels };
   if (Object.keys(themes).length) payload.th = themes;
+
+  if (withImg) {
+    const cf = addMedia(toolPrefs.coinFront);
+    const cb = addMedia(toolPrefs.coinBack);
+    if (cf) payload.cf = cf;
+    if (cb) payload.cb = cb;
+  }
+
+  if (withSfx) {
+    /** @type {{ style: string, vol: number, slot: Record<string, number>, custom?: Record<string, string> }} */
+    const s = { style: sfxStyleId(), vol: masterVolume(), slot: {} };
+    SFX_VOL_SLOTS.forEach(function (slot) { s.slot[slot.id] = slotVol(slot.id); });
+    /** @type {Record<string, string>} */
+    const custom = {};
+    SFX_SLOTS.forEach(function (slot) {
+      const key = addMedia(customSfx[slot.id]);
+      if (key) custom[slot.id] = key;
+    });
+    if (Object.keys(custom).length) s.custom = custom;
+    payload.sfx = s;
+  }
+
+  if (Object.keys(media).length) payload.m = media;
+
   const bytes = new TextEncoder().encode(JSON.stringify(payload));
-  let bin = '';
-  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  const packed = await deflateRaw(bytes);
+  const body = packed || bytes;
+  const prefix = packed ? SHARE_PREFIX_V3 : SHARE_PREFIX_V3R;
   return {
-    code: SHARE_PREFIX + btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''),
+    code: prefix + b64UrlEncode(bytesToB64(body)),
     names: cluster.map(function (w) { return w.name; }),
+    chars: prefix.length + Math.ceil(body.length / 3) * 4,
+    media: Object.keys(media).length,
+    compressed: !!packed,
   };
 }
 
 /**
- * 解析分享码（兼容 v1 单转盘旧码，统一转成 v2 组结构）
+ * 解析分享码（兼容 v1 / v2 旧码，统一转成 v3 结构，旧码没有媒体）
  * @param {string} raw
- * @returns {Result<{ w: Array<{ n: string, t: string, r: number, i: Array<[string, number, number]> }>, th: Record<string, { n: string, c: string[], g?: string }> }>}
+ * @returns {Promise<Result<{
+ *   w: Array<{ n: string, t: string, r: number, i: Array<any[]> }>,
+ *   th: Record<string, { n: string, c: string[], g?: string }>,
+ *   media: Record<string, string>,
+ *   sfx: { style?: string, vol?: number, slot?: Record<string, number>, custom?: Record<string, string> } | null,
+ *   coin: { front?: string, back?: string } | null
+ * }>>}
  */
-function parseShareCode(raw) {
+async function parseShareCode(raw) {
+  const code = String(raw).replace(/\s+/g, '');
+  if (!code) return Err('分享码是空的');
+  if (code.length > SHARE_MAX_CHARS) return Err('分享码过长，可能没有完整复制');
   try {
-    const code = String(raw).replace(/\s+/g, '');
-    if (!code.startsWith(SHARE_PREFIX)) return Err('不是有效的分享码（应以 WHEEL1. 开头）');
-    let b64 = code.slice(SHARE_PREFIX.length).replace(/-/g, '+').replace(/_/g, '/');
-    while (b64.length % 4) b64 += '=';
-    if (b64.length > 12000) return Err('分享码过长');
-    const bin = atob(b64);
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    const p = JSON.parse(new TextDecoder().decode(bytes));
-    if (!p || (p.v !== 1 && p.v !== 2)) return Err('分享码版本不支持');
-
-    if (p.v === 1) {
-      // v1 单转盘旧码 → 转成单元素组
-      if (typeof p.n !== 'string' || typeof p.tid !== 'string' || !Array.isArray(p.i)) {
-        return Err('分享码内容不完整');
+    // ---- 旧格式：v1 / v2，无媒体 ----
+    if (code.startsWith(SHARE_PREFIX)) {
+      const bytes = b64ToBytes(b64UrlDecode(code.slice(SHARE_PREFIX.length)));
+      const p = JSON.parse(new TextDecoder().decode(bytes));
+      if (!p || (p.v !== 1 && p.v !== 2)) return Err('分享码版本不支持');
+      if (p.v === 1) {
+        if (typeof p.n !== 'string' || typeof p.tid !== 'string' || !Array.isArray(p.i)) {
+          return Err('分享码内容不完整');
+        }
+        const th = p.th && typeof p.th === 'object' ? { [p.tid]: p.th } : {};
+        return Ok({
+          w: [{ n: p.n, t: p.tid, r: p.r ? 1 : 0, i: p.i.map(function (pair) { return [pair[0], pair[1], -1]; }) }],
+          th: th, media: {}, sfx: null, coin: null,
+        });
       }
-      const th = p.th && typeof p.th === 'object' ? { [p.tid]: p.th } : {};
-      return Ok({ w: [{ n: p.n, t: p.tid, r: p.r ? 1 : 0, i: p.i.map(function (pair) { return [pair[0], pair[1], -1]; }) }], th: th });
+      if (!Array.isArray(p.w) || p.w.length < 1 || p.w.length > 20) return Err('分享码中的转盘数量无效');
+      for (const w of p.w) {
+        if (!w || typeof w.n !== 'string' || typeof w.t !== 'string' || !Array.isArray(w.i)) {
+          return Err('分享码内容不完整');
+        }
+      }
+      const th = (p.th && typeof p.th === 'object') ? p.th : {};
+      return Ok({ w: p.w, th: th, media: {}, sfx: null, coin: null });
     }
-    // v2：整组
+
+    // ---- v3：带媒体 ----
+    let bytes;
+    if (code.startsWith(SHARE_PREFIX_V3)) {
+      if (typeof DecompressionStream !== 'function') {
+        return Err('这个分享码是压缩格式，当前浏览器解不开，请用 Chrome / Edge 打开');
+      }
+      bytes = await inflateRaw(b64ToBytes(b64UrlDecode(code.slice(SHARE_PREFIX_V3.length))));
+    } else if (code.startsWith(SHARE_PREFIX_V3R)) {
+      bytes = b64ToBytes(b64UrlDecode(code.slice(SHARE_PREFIX_V3R.length)));
+    } else {
+      return Err('不是有效的分享码（应以 WHEEL2. 开头）');
+    }
+
+    const p = JSON.parse(new TextDecoder().decode(bytes));
+    if (!p || p.v !== 3) return Err('分享码版本不支持');
     if (!Array.isArray(p.w) || p.w.length < 1 || p.w.length > 20) return Err('分享码中的转盘数量无效');
     for (const w of p.w) {
       if (!w || typeof w.n !== 'string' || typeof w.t !== 'string' || !Array.isArray(w.i)) {
         return Err('分享码内容不完整');
       }
     }
+
+    /** @type {Record<string, string>} */
+    const media = {};
+    const rawMedia = (p.m && typeof p.m === 'object') ? p.m : {};
+    for (const key of Object.keys(rawMedia)) {
+      const item = rawMedia[key];
+      if (!item || typeof item.t !== 'string' || typeof item.d !== 'string') continue;
+      if (!/^(image|audio)\//.test(item.t)) continue;
+      media[key] = joinDataUrl(item.t, item.d);
+    }
+
+    let sfx = null;
+    if (p.sfx && typeof p.sfx === 'object') {
+      sfx = {
+        style: typeof p.sfx.style === 'string' ? p.sfx.style : undefined,
+        vol: typeof p.sfx.vol === 'number' ? p.sfx.vol : undefined,
+        slot: (p.sfx.slot && typeof p.sfx.slot === 'object') ? p.sfx.slot : undefined,
+        custom: (p.sfx.custom && typeof p.sfx.custom === 'object') ? p.sfx.custom : undefined,
+      };
+    }
+
+    const coin = {
+      front: typeof p.cf === 'string' ? media[p.cf] : undefined,
+      back: typeof p.cb === 'string' ? media[p.cb] : undefined,
+    };
+
     const th = (p.th && typeof p.th === 'object') ? p.th : {};
-    return Ok({ w: p.w, th: th });
+    return Ok({ w: p.w, th: th, media: media, sfx: sfx, coin: (coin.front || coin.back) ? coin : null });
   } catch (e) {
     return Err('分享码无法解析，请确认完整复制');
   }
 }
 
-document.getElementById('btn-gen-code').addEventListener('click', function () {
+document.getElementById('btn-gen-code').addEventListener('click', async function () {
+  const btn = /** @type {HTMLButtonElement} */ (this);
   const box = /** @type {HTMLTextAreaElement} */ (document.getElementById('share-code'));
   const tools = document.getElementById('share-tools');
   const info = document.getElementById('share-info');
-  const result = buildShareCode();
-  box.value = result.code;
-  box.style.display = '';
-  tools.style.display = '';
-  info.style.display = '';
-  info.textContent = result.names.length === 1
-    ? '本分享码包含 1 个转盘：「' + result.names[0] + '」'
-    : '本分享码包含 ' + result.names.length + ' 个转盘（跳转链成组）：' + result.names.map(function (n) { return '「' + n + '」'; }).join(' → ');
-  box.focus();
-  box.select();
-  toast('分享码已生成，复制发给对方即可');
+  const withImg = /** @type {HTMLInputElement} */ (document.getElementById('share-with-img')).checked;
+  const withSfx = /** @type {HTMLInputElement} */ (document.getElementById('share-with-sfx')).checked;
+  const oldText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '打包中…';
+  try {
+    const result = await buildShareCode({ img: withImg, sfx: withSfx });
+    box.value = result.code;
+    box.style.display = '';
+    tools.style.display = '';
+    info.style.display = '';
+    const kb = result.code.length > 1024 * 1024
+      ? (result.code.length / 1024 / 1024).toFixed(2) + ' MB'
+      : Math.round(result.code.length / 1024) + ' KB';
+    const parts = [];
+    parts.push(result.names.length === 1
+      ? '本分享码包含 1 个转盘：「' + result.names[0] + '」'
+      : '本分享码包含 ' + result.names.length + ' 个转盘（跳转链成组）：' + result.names.map(function (n) { return '「' + n + '」'; }).join(' → '));
+    parts.push(result.media ? '含 ' + result.media + ' 份图片/音频' : '不含图片和音频');
+    parts.push('码长约 ' + kb);
+    info.textContent = parts.join(' · ');
+    box.focus();
+    box.select();
+    toast(result.code.length > 200000 ? '分享码较长，建议用「存成文件」发送' : '分享码已生成，复制发给对方即可');
+  } catch (e) {
+    console.error('[wheel] 生成分享码失败：', e);
+    toast('生成失败，可能是图片或音频太多，试试用「存成文件」', true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
 });
 
 document.getElementById('btn-copy-code').addEventListener('click', function () {
@@ -3802,67 +3998,159 @@ document.getElementById('btn-copy-code').addEventListener('click', function () {
   }
 });
 
-document.getElementById('btn-import').addEventListener('click', function () {
+document.getElementById('btn-import').addEventListener('click', async function () {
+  const btn = /** @type {HTMLButtonElement} */ (this);
   const box = /** @type {HTMLTextAreaElement} */ (document.getElementById('import-code'));
-  const r = parseShareCode(box.value);
-  if (!r.ok) { toast(r.error, true); return; }
-  if (spinning) { toast('正在转，等停了再导入', true); return; }
-  if (app.wheels.length + r.value.w.length > 20) { toast('导入后超过 20 个转盘上限', true); return; }
-  const p = r.value;
+  const oldText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '导入中…';
+  try {
+    const r = await parseShareCode(box.value);
+    if (!r.ok) { toast(r.error, true); return; }
+    if (spinning) { toast('正在转，等停了再导入', true); return; }
+    if (app.wheels.length + r.value.w.length > 20) { toast('导入后超过 20 个转盘上限', true); return; }
+    const p = r.value;
 
-  // 1) 自带的自定义主题：按旧主题 id 去重注册，映射到新实例
-  /** @type {Record<string, string>} */
-  const themeMap = {};
-  /** @type {WheelTheme[]} */
-  const newThemes = [];
-  for (const oldId of Object.keys(p.th)) {
-    const th = p.th[oldId];
-    const tr = createTheme(th.n, th.c, undefined, th.g);
-    if (!tr.ok) { toast('分享码里的主题无效：' + tr.error, true); return; }
-    themeMap[oldId] = tr.value.id;
-    newThemes.push(tr.value);
-  }
+    // 1) 自带的自定义主题：按旧主题 id 去重注册，映射到新实例
+    /** @type {Record<string, string>} */
+    const themeMap = {};
+    /** @type {WheelTheme[]} */
+    const newThemes = [];
+    for (const oldId of Object.keys(p.th)) {
+      const th = p.th[oldId];
+      const tr = createTheme(th.n, th.c, undefined, th.g);
+      if (!tr.ok) { toast('分享码里的主题无效：' + tr.error, true); return; }
+      themeMap[oldId] = tr.value.id;
+      newThemes.push(tr.value);
+    }
 
-  // 2) 预生成新转盘 id，跳转链接重映射到新 id（整组内互跳不断链）
-  const idMap = p.w.map(function () { return genId('tab'); });
-  /** @type {WheelTab[]} */
-  const tabs = [];
-  for (let i = 0; i < p.w.length; i++) {
-    const w = p.w[i];
-    const themeId = themeMap[w.t] || (BUILTIN_THEMES.some(function (t) { return t.id === w.t; }) ? w.t : BUILTIN_THEMES[1].id);
-    const tr = validateTab({
-      id: idMap[i],
-      name: w.n,
-      themeId: themeId,
-      removeWinner: !!w.r,
-      items: w.i.map(function (pair) {
-        const linkMark = pair[2];
-        let linkTabId;
-        if (typeof linkMark === 'number' && linkMark >= 0 && linkMark < idMap.length) {
-          linkTabId = idMap[linkMark];
-        } else if (typeof linkMark === 'string' && linkMark.startsWith('tool:')) {
-          linkTabId = linkMark; // 工具链接原样保留
-        }
-        return {
-          name: pair[0],
-          weight: pair[1],
-          linkTabId: linkTabId,
-        };
-      }),
+    // 2) 预生成新转盘 id，跳转链接重映射到新 id（整组内互跳不断链）
+    const idMap = p.w.map(function () { return genId('tab'); });
+    /** @type {WheelTab[]} */
+    const tabs = [];
+    for (let i = 0; i < p.w.length; i++) {
+      const w = p.w[i];
+      const themeId = themeMap[w.t] || (BUILTIN_THEMES.some(function (t) { return t.id === w.t; }) ? w.t : BUILTIN_THEMES[1].id);
+      const tr = validateTab({
+        id: idMap[i],
+        name: w.n,
+        themeId: themeId,
+        removeWinner: !!w.r,
+        items: w.i.map(function (pair) {
+          const linkMark = pair[2];
+          let linkTabId;
+          if (typeof linkMark === 'number' && linkMark >= 0 && linkMark < idMap.length) {
+            linkTabId = idMap[linkMark];
+          } else if (typeof linkMark === 'string' && linkMark.startsWith('tool:')) {
+            linkTabId = linkMark; // 工具链接原样保留
+          }
+          // pair[3] 是媒体字典的键：扇形贴图，和原作者的那张图逐字节相同
+          const img = (typeof pair[3] === 'string' && p.media[pair[3]]) ? p.media[pair[3]] : undefined;
+          return {
+            name: pair[0],
+            weight: pair[1],
+            linkTabId: linkTabId,
+            img: img,
+          };
+        }),
+      });
+      if (!tr.ok) { toast('分享码里的转盘「' + w.n + '」无效：' + tr.error, true); return; }
+      tabs.push(tr.value);
+    }
+
+    app = Object.freeze({
+      wheels: app.wheels.concat(tabs),
+      activeId: tabs[0].id,
+      customThemes: app.customThemes.concat(newThemes),
     });
-    if (!tr.ok) { toast('分享码里的转盘「' + w.n + '」无效：' + tr.error, true); return; }
-    tabs.push(tr.value);
-  }
+    saveApp(app);
 
-  app = Object.freeze({
-    wheels: app.wheels.concat(tabs),
-    activeId: tabs[0].id,
-    customThemes: app.customThemes.concat(newThemes),
-  });
-  saveApp(app);
-  renderAll();
-  box.value = '';
-  toast('已导入 ' + tabs.length + ' 个转盘：「' + tabs.map(function (t) { return t.name; }).join('」「') + '」');
+    // 3) 硬币图片：作者设过的正反面一起搬过来
+    if (p.coin) {
+      let coinChanged = false;
+      if (p.coin.front && isFaceDataUrl(p.coin.front)) { toolPrefs.coinFront = p.coin.front; coinChanged = true; }
+      if (p.coin.back && isFaceDataUrl(p.coin.back)) { toolPrefs.coinBack = p.coin.back; coinChanged = true; }
+      if (coinChanged) {
+        saveToolPrefs();
+        renderCoinFace('正');
+        renderCoinFace('反');
+      }
+    }
+
+    // 4) 音效：风格、总音量、各音效音量、自定义音频
+    let sfxNote = '';
+    if (p.sfx) {
+      if (p.sfx.style && SFX_STYLES[p.sfx.style]) localStorage.setItem(STYLE_KEY, p.sfx.style);
+      if (typeof p.sfx.vol === 'number') setMasterVolume(p.sfx.vol);
+      if (p.sfx.slot && typeof p.sfx.slot === 'object') {
+        Object.keys(p.sfx.slot).forEach(function (id) {
+          if (SFX_VOL_SLOTS.some(function (s) { return s.id === id; })) setSlotVol(id, p.sfx.slot[id]);
+        });
+      }
+      if (p.sfx.custom && typeof p.sfx.custom === 'object') {
+        let failed = false;
+        Object.keys(p.sfx.custom).forEach(function (slot) {
+          const url = p.media[p.sfx.custom[slot]];
+          if (!url || !SFX_SLOTS.some(function (s) { return s.id === slot; })) return;
+          customSfx[slot] = url;
+          decodeSfx(slot, url);
+        });
+        if (!saveCustomSfx()) failed = true;
+        if (failed) sfxNote = '（本地存储放不下自定义音频，音效没存住）';
+      }
+      // 让界面上的控件跟着新值走
+      if (sfxStyleSelect) sfxStyleSelect.value = sfxStyleId();
+      if (sfxVolumeInput) {
+        sfxVolumeInput.value = String(Math.round(masterVolume() * 100));
+        paintVolumeLabel(Math.round(masterVolume() * 100));
+      }
+      buildVolRows();
+      renderSfxRows();
+    }
+
+    renderAll();
+    box.value = '';
+    toast('已导入 ' + tabs.length + ' 个转盘：「' + tabs.map(function (t) { return t.name; }).join('」「') + '」' + sfxNote);
+  } catch (e) {
+    console.error('[wheel] 导入失败：', e);
+    toast('导入失败：分享码可能不完整', true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
+});
+
+// ---- 分享包存成文件 / 从文件读入（码太长时比复制粘贴稳） ----
+document.getElementById('btn-save-pack').addEventListener('click', function () {
+  const box = /** @type {HTMLTextAreaElement} */ (document.getElementById('share-code'));
+  if (!box.value) { toast('先生成分享码', true); return; }
+  const blob = new Blob([box.value], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '幸运转盘分享-' + new Date().toISOString().slice(0, 10) + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  toast('已存成文件，直接发给对方即可');
+});
+
+document.getElementById('btn-load-pack').addEventListener('click', function () {
+  document.getElementById('pack-file').click();
+});
+
+document.getElementById('pack-file').addEventListener('change', async function () {
+  const input = /** @type {HTMLInputElement} */ (this);
+  const file = input.files && input.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    document.getElementById('import-code').value = text.trim();
+    toast('已读入文件，点「导入为新转盘」');
+  } catch (e) {
+    toast('文件读取失败', true);
+  }
+  input.value = '';
 });
 
 // 初始化
