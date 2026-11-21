@@ -581,6 +581,12 @@
       <input type="checkbox" id="remove-winner">
       转中后自动移除该选项（适合淘汰制）
     </label>
+    <label for="img-fit" style="margin-top:16px">扇形贴图方式</label>
+    <select id="img-fit">
+      <option value="fill">整块铺满（扇形本身就是这张图）</option>
+      <option value="whole">整张缩进扇形，四周留底色</option>
+    </select>
+    <p class="muted" style="margin-top:8px">贴图方式对全部扇形生效。选项很多、扇区很窄时，铺满模式只截取图片中间的一条竖带，属正常现象。</p>
     <p class="muted" style="margin-top:12px">给单个扇形设置贴图：点选项右侧的 🖼 按钮，会用裁剪编辑器打开。图片会自动压缩保存在本地。</p>
     <input type="file" id="item-img-file" accept="image/*" style="display:none">
     <p class="muted" style="margin-top:8px">所有数据自动保存在浏览器本地。</p>
@@ -604,6 +610,12 @@
     <div id="sfx-rows"></div>
     <input type="file" id="sfx-file" accept="audio/*,.mp3,.m4a,.wav,.ogg,.aac,.flac" style="display:none">
     <p class="muted" id="sfx-usage" style="margin-top:8px"></p>
+  </section>
+
+  <section>
+    <h2>版本与更新</h2>
+    <p class="muted" style="margin-bottom:10px">如果发现看到的还是旧界面（明明已经更新过了），点下面的按钮强制清掉本地缓存重新加载。转盘、主题、贴图、音效设置都保存在另一处，不会丢。</p>
+    <button id="btn-force-update" class="ghost">⟳ 立即更新</button>
   </section>
 
   <section>
@@ -705,7 +717,8 @@
         <li><b>重命名</b>：双击标签名或双击选项名，直接改字。</li>
         <li><b>排序</b>：选项右侧的「↑ ↓」调整谁在前谁在后，转盘扇区跟着变。</li>
         <li><b>跳转</b>：点选项旁的「🔗」，可以设置转到这个选项后跳去别的转盘，或跳去硬币/骰子/数字工具页。转中后弹窗里会出现跳转按钮。</li>
-        <li><b>扇形贴图</b>：点选项旁的「🖼」，选一张图后进入裁剪编辑器——注意编辑器里的亮色区域就是<b>这个扇形的真实形状</b>（一张披萨切片的楔形，张角按当前选项数自动算，比如 6 个选项就是 60°），亮区里看到什么，转到轮盘上就是什么。拖动平移、双指捏合缩放、旋转/翻转都只让图片在这块扇形里动（扇形的形状由转盘决定，不会跟着转，否则贴回去就对不上槽位了）。确认后图片贴进那个扇形；再点一次可选「更换」或「清除」。</li>
+        <li><b>扇形贴图</b>：点选项旁的「🖼」，选一张图后进入裁剪编辑器——编辑器里那块<b>扇形就是最终贴在轮盘上的那一块</b>，形状由当前选项数决定（比如 6 个选项就是 60°），转到哪个方向都不变形、不换位置，只是跟着轮盘一起转。拖动平移、双指捏合缩放、旋转/翻转都是在调整构图。确认后贴进那个扇形；再点一次可选「更换」或「清除」。</li>
+        <li><b>两种贴图方式</b>（在设置抽屉里切换，全局生效）：<b>整块铺满</b>（默认）——图等比放大到把整块扇形填满、不留底色，超出扇形的部分裁掉，扇形看起来"本身就是这张图"；<b>整张留边</b>——图等比缩小到整张塞进扇形里，四周露出扇区底色。窄扇区（选项很多）时铺满模式只截取图片中间一条竖带，属于正常现象，想看到整张图就切到留边。</li>
         <li><b>主题换肤</b>：在「⚙️ 设置」抽屉里下拉切换 10 种配色，整页按钮、指针、中心点都会跟着变色。「新建主题」可选多色自选或单色渐变（选一个颜色自动生成深浅，选项越多渐变越顺滑）。</li>
         <li><b>音效</b>：转动、抛硬币、摇骰子、切页面都有声音，详见下面「🔊 音效」一节。</li>
         <li><b>淘汰制</b>：勾选「转中后自动移除该选项」，适合多人轮流淘汰。</li>
@@ -764,7 +777,8 @@
         <li>所有转盘、主题、图片、自定义音频都自动保存在这台设备的浏览器里，换设备不会同步。</li>
         <li>安装到手机桌面后（浏览器菜单里的「添加到主屏幕」，或页面里的安装按钮），断网也能正常使用。</li>
         <li>分享码只带选项、权重、配色和跳转关系，不带图片和音频；跳转链接会自动映射到对方设备上的新转盘。</li>
-        <li>安卓手机还可以用安装包（APK）装成独立 APP，图标在桌面上、全屏无地址栏；APP 打开的就是网页版本身，所以网页更新了什么，APP 里立刻就是最新的，不用重新安装。</li>
+        <li>安卓手机还可以用安装包（APK）装成独立 APP，图标在桌面上、全屏无地址栏；APP 打开的就是网页版本身，所以网页更新了什么，APP 里就有最新的，不用重新安装。</li>
+        <li><b>现在是最新版吗</b>：网页每次打开都会先联网取最新页面（断网才用本地缓存），所以正常情况不会落后。如果 APK 或桌面图标里看起来还是旧界面，用「⚙️ 设置 → 版本与更新 → ⟳ 立即更新」清掉本地缓存重载即可；你的转盘、贴图、音效设置都不会丢。</li>
       </ul>
     </div>
   </div>
@@ -1631,6 +1645,73 @@ function totalWeight() {
   return currentTab().items.reduce(function (s, it) { return s + it.weight; }, 0);
 }
 
+/**
+ * 扇形贴纸的几何（"完整留边"模式用）：给出贴纸中心离圆心多远（d）、贴纸边长（box）
+ * 约束：正方形贴在扇形里时内侧两角最容易越过分隔线，所以边长按角度约束来算，
+ *      再检查外角不顶到圆边；允许极小角部被扇形裁掉（视觉上是贴合，不是缺口）
+ */
+function sliceSticker(radius, sliceAngle) {
+  const half = Math.min(Math.PI / 2 - 0.02, sliceAngle / 2);
+  const tanH = Math.tan(half);
+  const d = radius * 0.48;
+  // 角度约束：中心到内侧角的连线不能越过分隔线（留 10% 内缩余量再放宽回来）
+  const sByAngle = d * tanH / (1 + tanH);
+  // 半径约束：外侧角不能顶到圆边（圆边留 5% 余量）
+  const rMax = radius * 0.95;
+  const sByRadial = (Math.sqrt(Math.max(0, 2 * rMax * rMax - d * d)) - d) / 2;
+  const s = Math.max(3, Math.min(sByAngle * 1.1, sByRadial) * 0.97);
+  return { d: d, box: s * 2 };
+}
+
+/** 算一块扇形的外接矩形（顶点 + 弧上采样），用来保证图片能完全盖住它 */
+function sectorBBox(cx, cy, radius, mid, slice, samples) {
+  const n = samples || 12;
+  let minX = cx, maxX = cx, minY = cy, maxY = cy;
+  for (let i = 0; i <= n; i++) {
+    const a = mid - slice / 2 + (slice * i) / n;
+    const x = cx + Math.cos(a) * radius;
+    const y = cy + Math.sin(a) * radius;
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
+/**
+ * 把一张（已裁剪好的）方图铺进一块扇形：整块扇形被这张图填满，图保持正立、等比放大到盖住整块，
+ * 超出部分由扇形裁掉。这样扇形本身就是这张图，而不是"背后一张大图露个洞"。
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} cx
+ * @param {number} cy
+ * @param {number} radius
+ * @param {number} mid 该扇形角平分线方向（弧度）
+ * @param {number} slice 张角（弧度）
+ * @param {HTMLImageElement | HTMLCanvasElement} img
+ */
+function drawWedgeFilledImage(ctx, cx, cy, radius, mid, slice, img) {
+  // 先把画布转到"扇形朝正上方"的标准姿态，再按标准姿态算包围盒铺图。
+  // 这样同一张裁剪结果在任何一个扇区里都长得一模一样（只是整体跟着转），
+  // 也刚好等于裁剪预览里看到的那一块（预览用的就是 -90°，即正上方）。
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(mid + Math.PI / 2);
+  const b = sectorBBox(0, 0, radius, -Math.PI / 2, slice);
+  const k = Math.max(b.w / img.width, b.h / img.height);
+  const dw = img.width * k;
+  const dh = img.height * k;
+  ctx.drawImage(img, b.x + b.w / 2 - dw / 2, b.y + b.h / 2 - dh / 2, dw, dh);
+  ctx.restore();
+}
+
+// 扇形贴图方式：'fill' 整块铺满（默认，扇形本身就是这张图）| 'whole' 完整缩进、四周留底色
+const IMG_FIT_KEY = 'wheel_img_fit_v1';
+/** @type {() => 'fill' | 'whole'} */
+function imgFitMode() {
+  return localStorage.getItem(IMG_FIT_KEY) === 'whole' ? 'whole' : 'fill';
+}
+
 function drawWheel() {
   const tab = currentTab();
   const theme = getTheme(tab.themeId);
@@ -1670,7 +1751,7 @@ function drawWheel() {
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // 该扇形的专属贴图：裁进扇形内，cover 模式
+    // 该扇形的专属贴图：等比缩小、完整放进扇形中央（不变形，四周留扇形本色）
     if (it.img) {
       let itemImg = bgImageCache.get(it.img) || null;
       if (!bgImageCache.has(it.img)) {
@@ -1687,9 +1768,18 @@ function drawWheel() {
         ctx.arc(cx, cy, radius, a0, a1);
         ctx.closePath();
         ctx.clip();
-        const scale = Math.max((radius * 2) / itemImg.width, (radius * 2) / itemImg.height);
-        const dw = itemImg.width * scale, dh = itemImg.height * scale;
-        ctx.drawImage(itemImg, cx - dw / 2, cy - dh / 2, dw, dh);
+        const mid = a0 + slice / 2;
+        if (imgFitMode() === 'fill') {
+          // 整块扇形就是这张图：图转到该扇形的方向、等比放大盖满，超出部分被扇形裁掉
+          drawWedgeFilledImage(ctx, cx, cy, radius, mid, slice, itemImg);
+        } else {
+          const sticker = sliceSticker(radius, slice);
+          const px = cx + Math.cos(mid) * sticker.d;
+          const py = cy + Math.sin(mid) * sticker.d;
+          const k = Math.min(sticker.box / itemImg.width, sticker.box / itemImg.height);
+          const dw = itemImg.width * k, dh = itemImg.height * k;
+          ctx.drawImage(itemImg, px - dw / 2, py - dh / 2, dw, dh);
+        }
         ctx.restore();
         // 贴图后补一条分隔线
         ctx.beginPath();
@@ -2397,6 +2487,15 @@ sfxStyleSelect.addEventListener('change', function () {
   toast('已切换音效风格：' + SFX_STYLES[sfxStyleSelect.value].name);
 });
 
+// 扇形贴图方式：铺满 / 留边
+const imgFitSelect = /** @type {HTMLSelectElement} */ (document.getElementById('img-fit'));
+imgFitSelect.value = imgFitMode();
+imgFitSelect.addEventListener('change', function () {
+  localStorage.setItem(IMG_FIT_KEY, imgFitSelect.value === 'whole' ? 'whole' : 'fill');
+  drawWheel();
+  toast(imgFitSelect.value === 'whole' ? '贴图方式：整张留边' : '贴图方式：整块铺满');
+});
+
 themeSelect.addEventListener('change', function () { setTheme(themeSelect.value); });
 
 document.getElementById('remove-winner').addEventListener('change', function (e) {
@@ -2760,18 +2859,33 @@ function paintCropImage(ctx, V) {
   ctx.restore();
 }
 
+/** 离屏画布：贴纸预览要把整张图先合成好再缩放，复用以避免每次拖动都新建 */
+let cropOffCanvas = null;
+
 /** 把当前裁剪状态画到指定尺寸的画布上下文（显示用）；shape 决定参考框形状 */
 function drawCropInto(ctx, V, shape) {
   if (!cropState) return;
-  paintCropImage(ctx, V);
-
   const sh = shape || { kind: 'circle' };
-  ctx.save();
+
   if (sh.kind === 'wedge') {
-    // 扇形：顶点在画布中心、半径 V/2，张角与轮盘上那个扇区完全一致
     const angle = sh.angle;
     const start = -Math.PI / 2 - angle / 2;
     const end = start + angle;
+    // 背景
+    ctx.clearRect(0, 0, V, V);
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0, 0, V, V);
+    // 合成整张图到离屏画布，再按轮盘同一套几何缩成贴纸
+    if (!cropOffCanvas) cropOffCanvas = document.createElement('canvas');
+    if (cropOffCanvas.width !== V) {
+      cropOffCanvas.width = V;
+      cropOffCanvas.height = V;
+    }
+    const offCtx = /** @type {CanvasRenderingContext2D} */ (cropOffCanvas.getContext('2d'));
+    offCtx.clearRect(0, 0, V, V);
+    paintCropImage(offCtx, V);
+    // 扇形外的暗色遮罩（先铺，图片再叠上去，保证扇形内亮、周围暗）
+    ctx.save();
     ctx.beginPath();
     ctx.rect(0, 0, V, V);
     ctx.moveTo(V / 2, V / 2);
@@ -2779,7 +2893,24 @@ function drawCropInto(ctx, V, shape) {
     ctx.closePath();
     ctx.fillStyle = 'rgba(0,0,0,0.58)';
     ctx.fill('evenodd');
-    // 扇形轮廓 + 圆心到边缘的分隔线
+    ctx.restore();
+    // 贴纸本体：与轮盘完全相同的映射
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(V / 2, V / 2);
+    ctx.arc(V / 2, V / 2, V / 2, start, end);
+    ctx.closePath();
+    ctx.clip();
+    if (imgFitMode() === 'fill') {
+      // 整块扇形铺满（图会随扇形方向转正）
+      drawWedgeFilledImage(ctx, V / 2, V / 2, V / 2, -Math.PI / 2, angle, cropOffCanvas);
+    } else {
+      const sticker = sliceSticker(V / 2, angle);
+      ctx.drawImage(cropOffCanvas, V / 2 - sticker.box / 2, V / 2 - sticker.d - sticker.box / 2, sticker.box, sticker.box);
+    }
+    ctx.restore();
+    // 扇形轮廓
+    ctx.save();
     ctx.beginPath();
     ctx.moveTo(V / 2, V / 2);
     ctx.arc(V / 2, V / 2, V / 2 - 1, start, end);
@@ -2787,19 +2918,23 @@ function drawCropInto(ctx, V, shape) {
     ctx.strokeStyle = 'rgba(255,255,255,0.9)';
     ctx.lineWidth = Math.max(2, V / 140);
     ctx.stroke();
-  } else {
-    // 圆形（硬币正反面用）
-    ctx.beginPath();
-    ctx.rect(0, 0, V, V);
-    ctx.arc(V / 2, V / 2, V * 0.42, 0, TAU, true);
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    ctx.fill('evenodd');
-    ctx.beginPath();
-    ctx.arc(V / 2, V / 2, V * 0.42, 0, TAU);
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = Math.max(2, V / 80);
-    ctx.stroke();
+    ctx.restore();
+    return;
   }
+
+  paintCropImage(ctx, V);
+  ctx.save();
+  // 圆形（硬币正反面用）
+  ctx.beginPath();
+  ctx.rect(0, 0, V, V);
+  ctx.arc(V / 2, V / 2, V * 0.42, 0, TAU, true);
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.fill('evenodd');
+  ctx.beginPath();
+  ctx.arc(V / 2, V / 2, V * 0.42, 0, TAU);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = Math.max(2, V / 80);
+  ctx.stroke();
   ctx.restore();
 }
 
@@ -2827,7 +2962,10 @@ function openCropEditor(file, targetSize, onDone, shape) {
     if (hint) {
       if (cropShape.kind === 'wedge') {
         const deg = Math.round(cropShape.angle * 180 / Math.PI);
-        hint.textContent = '亮色扇形区域内就是最终效果（当前 ' + Math.round(TAU / cropShape.angle) + ' 个选项，张角 ' + deg + '°）· 拖动/缩放/旋转只会让图片在扇形里动 · 手机上双指捏合缩放';
+        const fitTip = imgFitMode() === 'fill'
+          ? '扇形铺满模式：图会放大盖满这块扇形，超出的部分裁掉'
+          : '整张留边模式：图会缩小塞进扇形，四周露底色';
+        hint.textContent = '这块扇形就是贴到轮盘上的那一块（当前 ' + Math.round(TAU / cropShape.angle) + ' 个选项，张角 ' + deg + '°）· ' + fitTip + ' · 拖动/缩放/旋转调整构图';
       } else {
         hint.textContent = '圆形区域内是最终效果 · 拖动图片调整位置 · 手机上双指捏合缩放';
       }
@@ -3323,6 +3461,26 @@ renderAll();
 renderSfxRows();
 // 预解码已保存的自定义音效，避免第一次播放时没声音
 Object.keys(customSfx).forEach(function (slot) { decodeSfx(slot, customSfx[slot]); });
+
+// ---- 手动强制更新：清掉 Service Worker 与缓存后重载（数据在 localStorage，不受影响） ----
+document.getElementById('btn-force-update').addEventListener('click', async function () {
+  const btn = /** @type {HTMLButtonElement} */ (document.getElementById('btn-force-update'));
+  btn.disabled = true;
+  btn.textContent = '正在清理…';
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(function (r) { return r.unregister(); }));
+    }
+    if (window.caches) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(function (k) { return caches.delete(k); }));
+    }
+  } catch (e) {
+    console.warn('[wheel] 清理缓存时出错：', e);
+  }
+  location.reload();
+});
 
 // ---- PWA：注册 Service Worker（离线缓存） ----
 if ('serviceWorker' in navigator) {
