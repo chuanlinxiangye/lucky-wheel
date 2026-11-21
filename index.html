@@ -574,8 +574,24 @@
   .toast.show { transform: translateX(-50%) translateY(0); }
   .toast.error { border-color: var(--accent); color: var(--accent-2); font-weight: bold; }
 
-  /* ---- 音量滑杆行 ---- */
-  .vol-row {
+  /* ---- 盘面配色色块 ---- */
+  .swatch-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .swatch-row input[type="color"] {
+    width: 46px;
+    height: 46px;
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--panel-2);
+    cursor: pointer;
+  }
+
+  /* ---- 音量滑杆行 ---- */  .vol-row {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -710,6 +726,18 @@
     </div>
     <div id="draft-colors"></div>
     <button id="btn-create-theme" class="ghost">创建主题</button>
+  </section>
+
+  <section>
+    <h2>盘面配色</h2>
+    <label>当前主题的颜色（点色块直接改）</label>
+    <div id="theme-swatches" class="swatch-row"></div>
+    <div class="share-tools" style="margin-top:8px">
+      <button class="ghost small" id="btn-swatch-add">＋ 加一色</button>
+      <button class="ghost small" id="btn-swatch-del">− 减一色</button>
+      <button class="ghost small" id="btn-swatch-gradient">变单色渐变</button>
+    </div>
+    <p class="muted" style="margin-top:8px">点色块直接改，改完立刻生效。改到内置主题时会自动复制成一个你自己的主题（名字后面加「改」），原来的不受影响；换成单色渐变后只剩一个色块，改它整盘的深浅会一起重新生成。</p>
   </section>
 
   <section>
@@ -896,6 +924,7 @@
         <li><b>扇形贴图</b>：点选项旁的「🖼」，选一张图后进入裁剪编辑器——编辑器里那块<b>扇形就是最终贴在轮盘上的那一块</b>，形状由当前选项数决定（比如 6 个选项就是 60°），转到哪个方向都不变形、不换位置，只是跟着轮盘一起转。拖动平移、双指捏合缩放、旋转/翻转都是在调整构图。确认后贴进那个扇形；再点一次可选「更换」或「清除」。</li>
         <li><b>两种贴图方式</b>（在设置抽屉里切换，全局生效）：<b>整块铺满</b>（默认）——图等比放大到把整块扇形填满、不留底色，超出扇形的部分裁掉，扇形看起来"本身就是这张图"；<b>整张留边</b>——图等比缩小到整张塞进扇形里，四周露出扇区底色。窄扇区（选项很多）时铺满模式只截取图片中间一条竖带，属于正常现象，想看到整张图就切到留边。</li>
         <li><b>主题换肤</b>：在「⚙️ 设置」抽屉里下拉切换 10 种配色，整页按钮、指针、中心点都会跟着变色。「新建主题」可选多色自选或单色渐变（选一个颜色自动生成深浅，选项越多渐变越顺滑）。</li>
+        <li><b>盘面配色（直接改色）</b>：「⚙️ 设置 → 盘面配色」里会把当前主题的颜色列成一排色块，点哪个改哪个，改完立刻生效，不用起名字。改到内置主题时会自动复制成你自己的主题（名字后面加「改」），原主题不受影响。「＋ 加一色 / − 减一色」随意加减（2~12 种），「变单色渐变」会把整盘换成一个颜色的深浅渐变——之后只剩一个色块，改它整盘的深浅会一起重算。</li>
         <li><b>盘面外观</b>：「⚙️ 设置 → 盘面外观」里可以换三样东西——<b>盘面字体</b>（雅黑 / 黑体 / 宋体 / 楷体 / 圆体 / 等宽，选中的那项下拉里会直接用该字体预览）、<b>文字颜色</b>（白字深描边、黑字白描边、跟随主题色、或自己挑一个颜色——浅色自动配黑描边、深色自动配白描边）、<b>指针样式</b>（细针小箭头 / 大箭头 / 圆点粗针 / 盘外顶部标记）。只影响扇形上的文字和指针，界面按钮不受影响，免得排版错乱。</li>
         <li><b>音效</b>：转动、抛硬币、摇骰子、切页面都有声音，详见下面「🔊 音效」一节。</li>
         <li><b>淘汰制</b>：勾选「转中后自动移除该选项」，适合多人轮流淘汰。</li>
@@ -2617,6 +2646,7 @@ function renderAll() {
   renderTabs();
   renderItems();
   renderThemes();
+  renderSwatches();
   applyAccent(getTheme(currentTab().themeId));
   /** @type {HTMLInputElement} */ (document.getElementById('remove-winner')).checked = currentTab().removeWinner;
 }
@@ -2770,9 +2800,111 @@ function setTheme(id) {
   renderAll();
 }
 
+// ---- 盘面配色：直接改当前主题的颜色（改内置主题时自动复制成自定义） ----
+
+/** 把内置主题复制成一份可编辑的自定义主题，并把当前转盘切过去 */
+function cloneThemeAsCustom(t) {
+  const name = (t.name + '（改）').slice(0, 20);
+  const r = createTheme(name, t.colors.slice(), undefined, t.gradientBase);
+  if (!r.ok) { toast(r.error, true); return t; }
+  const tab = currentTab();
+  const newTab = Object.freeze({
+    id: tab.id, name: tab.name, items: tab.items, themeId: r.value.id, removeWinner: tab.removeWinner,
+  });
+  app = Object.freeze({
+    wheels: Object.freeze(app.wheels.map(function (w) { return w.id === tab.id ? newTab : w; })),
+    activeId: app.activeId,
+    customThemes: Object.freeze(app.customThemes.concat([r.value])),
+  });
+  saveApp(app);
+  return r.value;
+}
+
+/** 当前主题，必要时先复制成可编辑的 */
+function editableTheme() {
+  const t = getTheme(currentTab().themeId);
+  return t.builtin ? cloneThemeAsCustom(t) : t;
+}
+
+/** 就地替换某个自定义主题的颜色（不新建主题，id 保持不变） */
+function updateThemeColors(id, colors, gradientBase) {
+  const cur = allThemes().find(function (t) { return t.id === id; });
+  if (!cur || cur.builtin) return;
+  const r = createTheme(cur.name, colors, id, gradientBase);
+  if (!r.ok) { toast(r.error, true); return; }
+  const idx = app.customThemes.findIndex(function (t) { return t.id === id; });
+  const next = app.customThemes.slice();
+  if (idx >= 0) next[idx] = r.value; else next.push(r.value);
+  app = Object.freeze({ wheels: app.wheels, activeId: app.activeId, customThemes: Object.freeze(next) });
+  saveApp(app);
+}
+
+/** 画当前主题的色块；渐变主题只显示一个基色 */
+function renderSwatches() {
+  const box = document.getElementById('theme-swatches');
+  if (!box) return;
+  const t = getTheme(currentTab().themeId);
+  const isGrad = !!t.gradientBase;
+  box.innerHTML = '';
+  const list = isGrad ? [t.gradientBase] : t.colors.slice();
+  list.forEach(function (c, i) {
+    const input = document.createElement('input');
+    input.type = 'color';
+    input.value = c;
+    input.title = isGrad ? '改这一个颜色，整盘深浅会重新生成' : '第 ' + (i + 1) + ' 个颜色';
+    input.addEventListener('input', function () { applySwatch(i, input.value); });
+    // 选色面板关掉后再整体重绘，避免拖动时把面板顶掉
+    input.addEventListener('change', function () { renderAll(); });
+    box.appendChild(input);
+  });
+}
+
+/** 改第 i 个色块 */
+function applySwatch(i, hex) {
+  const t = editableTheme();
+  if (t.gradientBase) {
+    updateThemeColors(t.id, makeShades(hex, Math.max(currentTab().items.length, 3)), hex);
+  } else {
+    const colors = t.colors.slice();
+    colors[i] = hex;
+    updateThemeColors(t.id, colors, undefined);
+  }
+  applyAccent(getTheme(currentTab().themeId));
+  drawWheel();
+}
+
+document.getElementById('btn-swatch-add').addEventListener('click', function () {
+  const t = editableTheme();
+  // 渐变主题加点色：取三档深浅作为起点，转成多色
+  const colors = t.gradientBase
+    ? [t.colors[0], t.colors[Math.floor(t.colors.length / 2)], t.colors[t.colors.length - 1]]
+    : t.colors.slice();
+  if (colors.length >= 12) { toast('颜色最多 12 种', true); return; }
+  colors.push('#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0'));
+  updateThemeColors(t.id, colors, undefined);
+  renderAll();
+});
+
+document.getElementById('btn-swatch-del').addEventListener('click', function () {
+  const t = editableTheme();
+  if (t.gradientBase) { toast('渐变主题只有一个色块，直接改它就行', true); return; }
+  if (t.colors.length <= 2) { toast('至少保留 2 种颜色', true); return; }
+  const colors = t.colors.slice();
+  colors.pop();
+  updateThemeColors(t.id, colors, undefined);
+  renderAll();
+});
+
+document.getElementById('btn-swatch-gradient').addEventListener('click', function () {
+  const t = editableTheme();
+  const base = t.gradientBase || t.colors[0];
+  updateThemeColors(t.id, makeShades(base, Math.max(currentTab().items.length, 3)), base);
+  renderAll();
+  toast('已变成单色渐变，改那个色块整盘深浅会一起变');
+});
+
 /** @type {(id: string) => void} */
-function deleteTheme(id) {
-  const target = app.customThemes.find(function (x) { return x.id === id; });
+function deleteTheme(id) {  const target = app.customThemes.find(function (x) { return x.id === id; });
   if (!target) return;
   let next = Object.freeze({
     wheels: app.wheels,
