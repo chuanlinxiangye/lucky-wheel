@@ -2121,56 +2121,27 @@ function needleTrim() {
 }
 
 /**
- * 画指针（固定指向正上方）
+ * 画指针（固定指向正上方）。所有样式共用同一个轴心：
+ * 轴心圆心就在盘心 (cx, cy) 上，针身从轴心边缘长出来，不会出现"悬空的箭头"。
  * @param {CanvasRenderingContext2D} ctx
  */
 function drawNeedle(ctx, cx, cy, radius, accent) {
   const dark = accentDarker(accent);
   const style = appearance.needle;
 
-  if (style === 'arrow') {
-    // 一枚厚实的三角箭头，底边略窄，压在盘面上
-    const tip = cy - radius * 0.62;
-    const base = cy - radius * 0.3;
+  /** 轴心圆点：圆心严格对齐盘心 */
+  function hub(r) {
     ctx.beginPath();
-    ctx.moveTo(cx, tip);
-    ctx.lineTo(cx - 16, base);
-    ctx.lineTo(cx, base + 16);
-    ctx.lineTo(cx + 16, base);
-    ctx.closePath();
-    ctx.fillStyle = dark;
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    return;
-  }
-
-  if (style === 'dot') {
-    const tip = cy - radius * 0.55;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(cx, tip);
-    ctx.strokeStyle = dark;
-    ctx.lineWidth = 9;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(cx, tip, 9, 0, TAU);
-    ctx.fillStyle = dark;
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(cx, cy, 14, 0, TAU);
+    ctx.arc(cx, cy, r, 0, TAU);
     ctx.fillStyle = accent;
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 3;
     ctx.stroke();
-    return;
   }
 
   if (style === 'mark') {
-    // 盘外顶部一个倒三角，尖朝下指着盘面；盘面已在 drawWheel 里缩小腾出空间
+    // 盘外顶部倒三角，尖朝下指着盘面；盘面已在 drawWheel 里缩小腾出空间
     const tip = cy - radius - 6;
     const top = cy - radius - 30;
     ctx.beginPath();
@@ -2183,34 +2154,73 @@ function drawNeedle(ctx, cx, cy, radius, accent) {
     ctx.strokeStyle = 'rgba(255,255,255,0.9)';
     ctx.lineWidth = 2;
     ctx.stroke();
+    hub(10); // 盘心留一个点，标出旋转中心
     return;
   }
 
-  // classic：细针 + 小箭头 + 中心圆点（原样）
-  const needleTip = cy - radius * 0.6;
+  if (style === 'arrow') {
+    // 一整枚箭头：尖端在 0.62R，尾部一直收到轴心边缘，中间不悬空
+    const hubR = 11;
+    const tip = cy - radius * 0.62;
+    const shoulder = cy - radius * 0.42;
+    const tail = cy - hubR + 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, tip);
+    ctx.lineTo(cx + 14, shoulder);
+    ctx.lineTo(cx + 4.5, shoulder + 5);
+    ctx.lineTo(cx + 4.5, tail);
+    ctx.lineTo(cx - 4.5, tail);
+    ctx.lineTo(cx - 4.5, shoulder + 5);
+    ctx.lineTo(cx - 14, shoulder);
+    ctx.closePath();
+    ctx.fillStyle = dark;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+    hub(hubR);
+    return;
+  }
+
+  if (style === 'dot') {
+    const hubR = 14;
+    const tip = cy - radius * 0.55;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - hubR + 3);
+    ctx.lineTo(cx, tip);
+    ctx.strokeStyle = dark;
+    ctx.lineWidth = 9;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, tip, 9, 0, TAU);
+    ctx.fillStyle = dark;
+    ctx.fill();
+    hub(hubR);
+    return;
+  }
+
+  // classic：细针 + 小箭头，针身从轴心边缘起
+  const hubR = 12;
+  const tip = cy - radius * 0.6;
   ctx.beginPath();
-  ctx.moveTo(cx, cy - 14);
-  ctx.lineTo(cx, needleTip);
+  ctx.moveTo(cx, cy - hubR + 2);
+  ctx.lineTo(cx, tip);
   ctx.strokeStyle = dark;
   ctx.lineWidth = 4;
   ctx.lineCap = 'round';
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.moveTo(cx, needleTip - 14);
-  ctx.lineTo(cx - 9, needleTip + 2);
-  ctx.lineTo(cx + 9, needleTip + 2);
+  ctx.moveTo(cx, tip - 14);
+  ctx.lineTo(cx - 9, tip + 2);
+  ctx.lineTo(cx + 9, tip + 2);
   ctx.closePath();
   ctx.fillStyle = dark;
   ctx.fill();
 
-  ctx.beginPath();
-  ctx.arc(cx, cy, 12, 0, TAU);
-  ctx.fillStyle = accent;
-  ctx.fill();
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 3;
-  ctx.stroke();
+  hub(hubR);
 }
 
 function drawWheel() {
