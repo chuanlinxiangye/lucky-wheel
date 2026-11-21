@@ -574,6 +574,41 @@
   .toast.show { transform: translateX(-50%) translateY(0); }
   .toast.error { border-color: var(--accent); color: var(--accent-2); font-weight: bold; }
 
+  /* ---- 音量滑杆行 ---- */
+  .vol-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0;
+    min-height: 36px;
+  }
+  .vol-row .vol-name {
+    flex: 0 0 72px;
+    font-size: 14px;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .vol-row input[type="range"] {
+    flex: 1;
+    min-width: 0;
+    accent-color: var(--accent);
+    min-height: var(--icon-tap);
+  }
+  .vol-row .vol-val {
+    flex: 0 0 44px;
+    text-align: right;
+    font-size: 13px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .vol-row .vol-play {
+    flex: 0 0 auto;
+    padding: 0 10px;
+    min-height: var(--icon-tap);
+    min-width: var(--icon-tap);
+    font-size: 13px;
+  }
+
   /* ---- 安装横幅 ---- */
   #install-banner {
     display: none;
@@ -704,6 +739,15 @@
     <label for="sfx-style" style="margin-top:16px">音效风格（内置四种，选完自动试听）</label>
     <select id="sfx-style"></select>
     <p class="muted" style="margin-top:8px">风格只影响内置合成音；如果你给某个动作导入了自己的音频，那个动作仍然用你的音频。</p>
+
+    <label for="sfx-volume" style="margin-top:16px">总音量 <span id="sfx-volume-label" class="muted"></span></label>
+    <input type="range" id="sfx-volume" min="0" max="100" step="5" value="90" style="width:100%; accent-color:var(--accent)">
+    <p class="muted" style="margin-top:8px">各音效之间的响度已经按实测配平过（点击、跳齿这类高频轻音不会盖过出结果的提示音），这里调的是整体大小；拖到 <b>0 就是全部静音</b>。刚导入的自定义音频也会自动对齐到同一响度。</p>
+
+    <label style="margin-top:16px">各音效单独音量</label>
+    <div id="sfx-vol-rows"></div>
+    <button class="ghost small" id="btn-vol-reset" style="margin-top:8px">全部恢复 100%</button>
+    <p class="muted" style="margin-top:8px">每一行只影响那一个声音，拖动后松手会自动试听。觉得哪个偏大就往左拉、偏小就往右拉，不用管别的。</p>
   </section>
 
   <section>
@@ -716,6 +760,7 @@
 
   <section>
     <h2>版本与更新</h2>
+    <p class="muted" style="margin-bottom:8px">本地存储已用 <b id="storage-usage">—</b>（浏览器一般只给 5 MB 左右，装满了新设置就存不住）。</p>
     <p class="muted" style="margin-bottom:10px">如果发现看到的还是旧界面（明明已经更新过了），点下面的按钮强制清掉本地缓存重新加载。转盘、主题、贴图、音效设置都保存在另一处，不会丢。</p>
     <button id="btn-force-update" class="ghost">⟳ 立即更新</button>
   </section>
@@ -863,6 +908,9 @@
         <li><b>支持格式</b>：<b>MP3 最稳</b>（推荐）；WAV、M4A/AAC 也可以；OGG 在 Chrome 上能用但 iPhone 的 Safari 不行；<b>MP4 不建议</b>——它是视频容器，浏览器把它当音频播放经常失败，请先转成 MP3。</li>
         <li><b>文件大小</b>：单个文件请在 <b>1MB 以内</b>（最多 1.5MB）。因为音频要存在浏览器本地，而总空间只有 5MB 左右，还要和你导入的扇形贴图共用。超了会拒绝并提示，存储满了会自动回滚，不会把你的设置搞坏。建议掐一段 1~3 秒的高潮部分。</li>
         <li><b>只在本机生效</b>：自定义音频保存在你这台设备上，<b>分享码不包含音频</b>（体积太大塞不进去），别人导入你的转盘听到的还是内置合成音。</li>
+        <li><b>音量与响度配平</b>：「⚙️ 设置 → 音效」里有两层滑杆。<b>总音量</b>调整体，拖到 <b>0 就是全部静音</b>；下面的<b>各音效单独音量</b>一共 6 根（转出结果 / 转盘跳齿 / 抛硬币 / 丢骰子 / 随机数字 / 点击切换），每根只管自己那一个，旁边有「▶」可以立刻试听，松手也会自动试听一次。哪根觉得偏大就往左拉、偏小往右拉，互不影响；下面的「全部恢复 100%」一键归位。</li>
+        <li><b>配平是怎么算的</b>：各音效的相对响度是按实际波形量出来的峰值配平过——<b>点击、跳齿</b>这类高频轻音压在 -20dBFS 左右（听得见但不吵），<b>抛硬币、丢骰子</b>在 -13dBFS，<b>出结果</b>最大、约 -11dBFS。所以不会出现「点一下吓一跳、出结果反而听不清」。滑杆是在这个基础上再乘一层。</li>
+        <li><b>导入的音频会自动对齐</b>：给某个动作换了自定义音频后，程序会先量它本身的峰值，再自动抬/压到和内置音效同一量级（约 -10dBFS），所以换一首很响的流行歌也不会炸出来；那个动作的单独滑杆同样管用。</li>
       </ul>
 
       <h3>🔍 界面大小（手机上觉得小就调这里）</h3>
@@ -1353,6 +1401,8 @@ function playResultChime() {
   const ac = ensureAudio();
   if (!ac) return;
   const st = S();
+  sfxVol = levelOf('result');
+  if (!(sfxVol > 0.0002)) return; // 静音：一个音都不排程
   const now = ac.currentTime + 0.01;
   const notes = [
     { f: st.notes[0], t: 0, gain: 0.20 },
@@ -1367,7 +1417,7 @@ function playResultChime() {
       const g = ac.createGain();
       osc.type = st.wave;
       osc.frequency.value = n.f * mult;
-      const peak = (n.gain * st.gain) / (i === 0 ? 1 : i === 1 ? 3.5 : 9);
+      const peak = Math.min(0.95, (n.gain * st.gain * sfxVol) / (i === 0 ? 1 : i === 1 ? 3.5 : 9));
       const start = now + n.t;
       g.gain.setValueAtTime(0.0001, start);
       g.gain.linearRampToValueAtTime(peak, start + 0.008);
@@ -1392,12 +1442,117 @@ function playResultChime() {
   hp.type = 'highpass';
   hp.frequency.value = 6000;
   const ng = ac.createGain();
-  ng.gain.value = 0.05;
+  ng.gain.value = Math.min(0.95, 0.05 * sfxVol);
   src.connect(hp).connect(ng).connect(ac.destination);
   src.start(now + 0.22);
 }
 
 // ---- 合成工具：噪声 + 音调 + 包络 ----
+
+/**
+ * 各音效的响度配平系数（离线按实际波形量的峰值算出来的，见注释里的目标峰值）
+ * 之前直接写死 0.02~0.16 的增益，结果「点击」只有 -29dBFS、「出结果」有 -11dBFS，
+ * 差 18dB 以上，所以听起来一个几乎听不见、一个吓人。
+ *   tap    -20 dBFS（最频繁，要轻）
+ *   tick   -19 dBFS（转动时每秒十几次，不能吵）
+ *   coin   -12 dBFS
+ *   dice   -12 dBFS
+ *   ding   -11 dBFS
+ *   result -10.7 dBFS（原本就是这个量级，作为基准不动）
+ */
+const SFX_LEVEL = {
+  tap: 2.9,
+  tick: 2.3,
+  coin: 1.5,
+  dice: 1.8,
+  ding: 2.0,
+  result: 1.0
+};
+
+/** 当前正在排程的音效的总倍率（由各 sfx 函数在入口设置） */
+let sfxVol = 1;
+
+const VOLUME_KEY = 'wheel_sfx_volume_v1';
+const SLOT_VOL_KEY = 'wheel_sfx_slot_vol_v1';
+
+/** 可单独调音量的音效（顺序即设置里的显示顺序） */
+const SFX_VOL_SLOTS = [
+  { id: 'result', name: '转出结果' },
+  { id: 'tick', name: '转盘跳齿' },
+  { id: 'coin', name: '抛硬币' },
+  { id: 'dice', name: '丢骰子' },
+  { id: 'ding', name: '随机数字' },
+  { id: 'tap', name: '点击切换' }
+];
+
+/** @type {Record<string, number>} 每个音效单独的倍率（0~1，缺省为 1） */
+let slotVols = {};
+try {
+  const rawSlot = localStorage.getItem(SLOT_VOL_KEY);
+  if (rawSlot) slotVols = JSON.parse(rawSlot) || {};
+} catch (e) {
+  slotVols = {};
+}
+
+/** @type {(id: string) => number} */
+function slotVol(id) {
+  const v = slotVols[id];
+  if (typeof v !== 'number' || !isFinite(v)) return 1;
+  return Math.max(0, Math.min(1, v));
+}
+
+/** @type {(id: string, v: number) => void} */
+function setSlotVol(id, v) {
+  slotVols[id] = Math.max(0, Math.min(1, v));
+  try {
+    localStorage.setItem(SLOT_VOL_KEY, JSON.stringify(slotVols));
+  } catch (e) {
+    /* 存不下就算了，本次会话仍然有效 */
+  }
+}
+
+/** 总音量的内存副本：即使 localStorage 写不进去（存满了），也照样生效、界面照样跟着动 */
+/** @type {number | null} */
+let masterVolCache = null;
+/** 是否已经提示过「本地存储存不下」
+ * @type {boolean} */
+let volStoreWarned = false;
+
+/** 总音量 0~1（默认 0.9） */
+/** @type {() => number} */
+function masterVolume() {
+  if (masterVolCache !== null) return masterVolCache;
+  let v = NaN;
+  try {
+    const raw = localStorage.getItem(VOLUME_KEY);
+    v = raw === null ? 0.9 : parseFloat(raw);
+  } catch (e) {
+    v = NaN;
+  }
+  masterVolCache = isFinite(v) ? Math.max(0, Math.min(1, v)) : 0.9;
+  return masterVolCache;
+}
+
+/** 写总音量：先更新内存（一定成功），再尽力落盘 */
+/** @type {(v: number) => void} */
+function setMasterVolume(v) {
+  masterVolCache = Math.max(0, Math.min(1, v));
+  try {
+    localStorage.setItem(VOLUME_KEY, String(masterVolCache));
+  } catch (e) {
+    if (!volStoreWarned) {
+      volStoreWarned = true;
+      toast('本地存储可能满了，音量只对本次打开有效', true);
+    }
+  }
+}
+
+/** 某个音效最终该乘的倍率 = 配平系数 × 单项音量 × 总音量 */
+/** @type {(id: string) => number} */
+function levelOf(id) {
+  const k = SFX_LEVEL[id] === undefined ? 1 : SFX_LEVEL[id];
+  return k * slotVol(id) * masterVolume();
+}
 
 /** @type {AudioBuffer | null} */
 let noiseBuf = null;
@@ -1424,7 +1579,9 @@ function noiseHit(ac, when, dur, gain, filterType, freq, q) {
   f.frequency.value = freq;
   if (q) f.Q.value = q;
   const g = ac.createGain();
-  g.gain.setValueAtTime(gain, when);
+  const peak = Math.min(0.95, gain * sfxVol);
+  if (!(peak > 0.0002)) return; // 音量为 0（静音）时不要排程，指数包络不能从 0 起
+  g.gain.setValueAtTime(peak, when);
   g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
   src.connect(f).connect(g).connect(ac.destination);
   src.start(when);
@@ -1437,8 +1594,10 @@ function tone(ac, when, freq, dur, gain, type) {
   const g = ac.createGain();
   o.type = type || 'sine';
   o.frequency.setValueAtTime(freq, when);
+  const peak = Math.min(0.95, gain * sfxVol);
+  if (!(peak > 0.0002)) return; // 静音时不排程（指数包络的起点不能是 0）
   g.gain.setValueAtTime(0.0001, when);
-  g.gain.linearRampToValueAtTime(gain, when + 0.005);
+  g.gain.linearRampToValueAtTime(peak, when + 0.005);
   g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
   o.connect(g).connect(ac.destination);
   o.start(when);
@@ -1454,6 +1613,7 @@ function sfxTap() {
   const ac = ensureAudio();
   if (!ac) return;
   const st = S();
+  sfxVol = levelOf('tap');
   const t = ac.currentTime + 0.005;
   noiseHit(ac, t, 0.028, 0.07 * st.gain, 'bandpass', 2200 * st.bright, 1.4);
   tone(ac, t, 1180 * st.pitch, 0.03 * st.decay, 0.025 * st.gain, st.wave);
@@ -1466,6 +1626,7 @@ function sfxTick() {
   const ac = ensureAudio();
   if (!ac) return;
   const st = S();
+  sfxVol = levelOf('tick');
   const t = ac.currentTime;
   noiseHit(ac, t, 0.018, 0.10 * st.gain, 'bandpass', 2800 * st.bright, 2.2);
   tone(ac, t, 1500 * st.pitch, 0.035 * st.decay, 0.045 * st.gain, st.wave);
@@ -1478,6 +1639,7 @@ function sfxCoin() {
   const ac = ensureAudio();
   if (!ac) return;
   const st = S();
+  sfxVol = levelOf('coin');
   const t0 = ac.currentTime + 0.01;
   // 起手：拇指弹起硬币的金属声
   tone(ac, t0, 2650 * st.pitch, 0.18 * st.decay, 0.09 * st.gain, st.wave);
@@ -1503,6 +1665,7 @@ function sfxDice() {
   const ac = ensureAudio();
   if (!ac) return;
   const st = S();
+  sfxVol = levelOf('dice');
   const t0 = ac.currentTime + 0.01;
   // 摇：不规则的短促碰撞，间隔随机，音量渐弱（像在杯子里晃）
   let acc = 0.02;
@@ -1526,6 +1689,7 @@ function sfxDing() {
   const ac = ensureAudio();
   if (!ac) return;
   const st = S();
+  sfxVol = levelOf('ding');
   const t = ac.currentTime + 0.01;
   tone(ac, t, st.notes[0] * 1.12, 0.45 * st.decay, 0.10 * st.gain, st.wave);
   tone(ac, t, st.notes[0] * 1.68, 0.28 * st.decay, 0.035 * st.gain, st.wave);
@@ -1557,6 +1721,9 @@ try {
 /** @type {Map<string, AudioBuffer>} 解码后的音频，播放时直接复用 */
 const sfxBuffers = new Map();
 
+/** @type {Map<string, number>} 槽位 → 该音频实测峰值（0~1），用来把自定义音频和内置音效调到同一响度 */
+const sfxPeaks = new Map();
+
 /** @type {() => boolean} */
 function saveCustomSfx() {
   try {
@@ -1575,10 +1742,25 @@ async function decodeSfx(slot, dataUrl) {
     const arr = await (await fetch(dataUrl)).arrayBuffer();
     const buf = await ac.decodeAudioData(arr);
     sfxBuffers.set(slot, buf);
+    sfxPeaks.set(slot, peakOfBuffer(buf));
   } catch (e) {
     sfxBuffers.delete(slot);
+    sfxPeaks.delete(slot);
     toast('这个音频解不开，换一个 MP3 试试', true);
   }
+}
+
+/** @type {(buf: AudioBuffer) => number} */
+function peakOfBuffer(buf) {
+  let peak = 0;
+  for (let c = 0; c < buf.numberOfChannels; c++) {
+    const d = buf.getChannelData(c);
+    for (let i = 0; i < d.length; i++) {
+      const v = d[i] < 0 ? -d[i] : d[i];
+      if (v > peak) peak = v;
+    }
+  }
+  return peak > 0 ? peak : 1;
 }
 
 /** @type {number} 自定义跳齿音的上次播放时刻（毫秒） */
@@ -1600,7 +1782,11 @@ function playSample(slot) {
   const src = ac.createBufferSource();
   src.buffer = buf;
   const g = ac.createGain();
-  g.gain.value = 0.9;
+  // 收到导入的音频先量峰值，再统一抬/压到 -10dBFS 附近（约 0.3），
+  // 这样不管导入的是响的流行歌还是轻的录音，听起来都和内置音效一个量级
+  const peak = sfxPeaks.get(slot) || 1;
+  const norm = Math.max(0.04, Math.min(1.8, 0.3 / peak));
+  g.gain.value = Math.min(1, norm * masterVolume() * slotVol(slot));
   src.connect(g).connect(ac.destination);
   src.start();
   return true;
@@ -1612,6 +1798,7 @@ const SFX_SYNTH = {
   tick: function () { sfxTick(); },
   coin: function () { sfxCoin(); },
   dice: function () { sfxDice(); },
+  ding: function () { sfxDing(); },
   tap: function () { sfxTap(); }
 };
 
@@ -2578,6 +2765,83 @@ soundToggle.addEventListener('change', function () {
   toast(soundToggle.checked ? '音效已开启' : '音效已关闭');
 });
 
+// 总音量
+const sfxVolumeInput = /** @type {HTMLInputElement} */ (document.getElementById('sfx-volume'));
+const sfxVolumeLabel = document.getElementById('sfx-volume-label');
+function paintVolumeLabel(pct) {
+  if (sfxVolumeLabel) sfxVolumeLabel.textContent = pct + '%';
+}
+sfxVolumeInput.value = String(Math.round(masterVolume() * 100));
+paintVolumeLabel(parseInt(sfxVolumeInput.value, 10));
+sfxVolumeInput.addEventListener('input', function () {
+  // 直接用滑杆自己的值刷数字，不再回头读存储——存储写失败也照样显示正确
+  const pct = Math.max(0, Math.min(100, parseInt(sfxVolumeInput.value, 10) || 0));
+  setMasterVolume(pct / 100);
+  paintVolumeLabel(pct);
+});
+sfxVolumeInput.addEventListener('change', function () {
+  // 松手时试听一下，方便判断这个音量合不合适
+  ensureAudio();
+  playResultChime();
+});
+
+// 各音效单独滑杆：只改自己那一个，配平系数不动
+const volRowsEl = document.getElementById('sfx-vol-rows');
+function buildVolRows() {
+  if (!volRowsEl) return;
+  volRowsEl.innerHTML = '';
+  SFX_VOL_SLOTS.forEach(function (s) {
+    const row = document.createElement('div');
+    row.className = 'vol-row';
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'vol-name';
+    nameEl.textContent = s.name;
+
+    const range = document.createElement('input');
+    range.type = 'range';
+    range.min = '0';
+    range.max = '100';
+    range.step = '5';
+    range.value = String(Math.round(slotVol(s.id) * 100));
+    range.setAttribute('aria-label', s.name + '音量');
+
+    const valEl = document.createElement('span');
+    valEl.className = 'vol-val';
+    valEl.textContent = range.value + '%';
+
+    const playBtn = document.createElement('button');
+    playBtn.className = 'ghost small vol-play';
+    playBtn.textContent = '▶';
+    playBtn.title = '试听这个音效';
+    playBtn.addEventListener('click', function () { previewSfx(s.id); });
+
+    range.addEventListener('input', function () {
+      const pct = Math.max(0, Math.min(100, parseInt(range.value, 10) || 0));
+      valEl.textContent = pct + '%';
+      setSlotVol(s.id, pct / 100);
+    });
+    range.addEventListener('change', function () { previewSfx(s.id); }); // 松手试听
+
+    row.appendChild(nameEl);
+    row.appendChild(range);
+    row.appendChild(valEl);
+    row.appendChild(playBtn);
+    volRowsEl.appendChild(row);
+  });
+}
+buildVolRows();
+
+const volResetBtn = document.getElementById('btn-vol-reset');
+if (volResetBtn) {
+  volResetBtn.addEventListener('click', function () {
+    slotVols = {};
+    try { localStorage.removeItem(SLOT_VOL_KEY); } catch (e) { /* 忽略 */ }
+    buildVolRows();
+    toast('各音效音量已恢复 100%');
+  });
+}
+
 // 音效风格选择
 const sfxStyleSelect = /** @type {HTMLSelectElement} */ (document.getElementById('sfx-style'));
 Object.keys(SFX_STYLES).forEach(function (id) {
@@ -2752,6 +3016,25 @@ const backdrop = document.getElementById('panel-backdrop');
 function openDrawer() {
   panel.classList.add('open');
   backdrop.classList.add('show');
+  paintStorageUsage();
+}
+
+/** 估算本地存储用量（UTF-16，每个字符 2 字节），用来判断是不是存满了 */
+function paintStorageUsage() {
+  const el = document.getElementById('storage-usage');
+  if (!el) return;
+  try {
+    let bytes = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k === null) continue;
+      const v = localStorage.getItem(k) || '';
+      bytes += (k.length + v.length) * 2;
+    }
+    el.textContent = (bytes / 1024 / 1024 >= 1 ? (bytes / 1024 / 1024).toFixed(2) + ' MB' : Math.round(bytes / 1024) + ' KB');
+  } catch (e) {
+    el.textContent = '读取失败';
+  }
 }
 function closeDrawer() {
   panel.classList.remove('open');
