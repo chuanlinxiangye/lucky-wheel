@@ -1,0 +1,2759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#2563eb">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="转盘">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>幸运转盘 · 帮你决定</title>
+<style>
+  :root {
+    --bg: #eaf3ff;
+    --panel: #ffffff;
+    --panel-2: #e9f1fb;
+    --accent: #2563eb;
+    --accent-2: #1d4ed8;
+    --text: #1e293b;
+    --muted: #5a6b85;
+    --border: #cadcf5;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #ffffff;
+    color: var(--text);
+    font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+    min-height: 100vh;
+    display: flex;
+  }
+  h1 { font-size: 27px; margin-bottom: 6px; }
+  .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+
+  /* ---- 左侧面板：默认隐藏的抽屉，底部导航「设置」呼出 ---- */
+  aside {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(380px, 92vw);
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 22px;
+    overflow-y: auto;
+    z-index: 60;
+    transform: translateX(-105%);
+    transition: transform .25s ease;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, .12);
+  }
+  aside.open { transform: translateX(0); }
+  #panel-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .4);
+    display: none;
+    z-index: 55;
+  }
+  #panel-backdrop.show { display: block; }
+  .panel-close {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+  section { margin-bottom: 24px; }
+  h2 { font-size: 17px; margin-bottom: 12px; color: var(--accent-2); }
+  .muted { color: var(--muted); font-size: 13px; }
+
+  label { font-size: 14px; color: var(--muted); display: block; margin: 10px 0 4px; }
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-size: 15px;
+    outline: none;
+  }
+  input:focus { border-color: var(--accent); }
+  .row { display: flex; gap: 8px; }
+
+  button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 15px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: filter .15s;
+  }
+  button:hover { filter: brightness(1.15); }
+  button.ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  button.ghost:hover { border-color: var(--accent); }
+  button.small { padding: 5px 10px; font-size: 12px; }
+
+  .btn-del {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 14px;
+    padding: 2px 6px;
+  }
+  .btn-del:hover { color: var(--accent); }
+  .btn-link {
+    background: transparent;
+    border: none;
+    font-size: 14px;
+    padding: 2px 4px;
+    cursor: pointer;
+    opacity: .75;
+  }
+  .btn-link:hover { opacity: 1; transform: scale(1.15); }
+  .btn-move {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 2px 3px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .btn-move:hover { color: var(--accent); }
+  .btn-move[disabled] { opacity: .25; cursor: default; }
+  .item-btns { display: flex; align-items: center; gap: 2px; }
+  #item-list select.inline-edit {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+    padding: 4px 8px;
+    font-size: 13px;
+  }
+
+  /* ---- 分享 / 导入 ---- */
+  textarea.code-box {
+    width: 100%;
+    height: 84px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 8px 10px;
+    font-size: 12px;
+    font-family: Consolas, monospace;
+    outline: none;
+    resize: vertical;
+    word-break: break-all;
+  }
+  textarea.code-box:focus { border-color: var(--accent); }
+  .share-tools { display: flex; gap: 8px; margin-top: 8px; }
+
+  /* ---- 图片裁剪编辑器 ---- */
+  #crop-modal { z-index: 150; }
+  #crop-canvas {
+    width: min(88vw, 320px);
+    height: min(88vw, 320px);
+    border-radius: 10px;
+    touch-action: none;
+    cursor: grab;
+    background: #111;
+  }
+  #crop-canvas:active { cursor: grabbing; }
+  .crop-tools { display: flex; gap: 8px; justify-content: center; margin: 12px 0; flex-wrap: wrap; }
+  .crop-zoom-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+  .crop-zoom-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+  .crop-hint { font-size: 12px; color: var(--muted); text-align: center; margin-top: 6px; line-height: 1.6; }
+
+  #item-list { list-style: none; }
+  #item-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 7px;
+    font-size: 15px;
+  }
+  .item-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: text;
+  }
+  .item-meta { color: var(--accent-2); font-size: 13px; }
+  #item-list input.inline-edit {
+    flex: 1;
+    min-width: 0;
+    padding: 2px 6px;
+    font-size: 13px;
+  }
+
+  select {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-size: 15px;
+  }
+  #custom-themes { margin-top: 10px; }
+  .custom-theme-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .custom-theme-row span:first-of-type { flex: 1; }
+  .swatches { display: flex; gap: 3px; }
+  .swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,.2); }
+
+  #draft-colors { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+  #draft-colors input[type="color"] {
+    width: 38px; height: 30px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--panel-2);
+    cursor: pointer;
+  }
+  .color-tools { display: flex; gap: 8px; margin-bottom: 8px; }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .checkbox-row input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+  /* ---- 主区域 ---- */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 24px;
+    padding-bottom: calc(86px + env(safe-area-inset-bottom));
+    position: relative;
+    overflow-y: auto;
+    /* 永远顶部对齐：标签栏钉在最顶，任何窗口高度都不会被裁掉 */
+    justify-content: flex-start;
+    padding-top: max(18px, env(safe-area-inset-top));
+  }
+
+  /* ---- 页面切换（底部导航式） ---- */
+  .page { display: none; width: 100%; flex-direction: column; align-items: center; gap: 14px; }
+  .page.active { display: flex; }
+  .page-title { font-size: 24px; font-weight: bold; }
+  .page-sub { color: var(--muted); font-size: 14px; margin-top: -6px; }
+  .page-action {
+    font-size: 18px;
+    font-weight: bold;
+    padding: 13px 52px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 4px 18px color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+  .big-result {
+    font-size: 46px;
+    font-weight: bold;
+    color: var(--accent-2);
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+  }
+
+  #bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 45;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .nav-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 0 6px;
+    font-size: 12px;
+    border-radius: 0;
+  }
+  .nav-btn .nav-icon { font-size: 23px; }
+  .nav-btn.active { color: var(--accent); font-weight: bold; }
+
+  /* 抛硬币：默认贴图为程序绘制的一元硬币（见 renderCoinFace） */
+  .coin {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    box-shadow: 0 6px 24px rgba(71, 85, 105, .35);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .coin.flipping { animation: coinflip .85s ease-in-out; }
+  @keyframes coinflip {
+    0% { transform: rotateX(0) translateY(0); }
+    50% { transform: rotateX(540deg) translateY(-46px); }
+    100% { transform: rotateX(1080deg) translateY(0); }
+  }
+
+  /* 丢骰子 */
+  .dice-faces { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; min-height: 96px; align-items: center; }
+  .die {
+    font-size: 76px;
+    line-height: 1;
+    color: var(--accent);
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,.18));
+  }
+  .die.rolling { animation: diceshake .12s linear infinite; }
+  @keyframes diceshake {
+    0% { transform: rotate(-9deg); }
+    50% { transform: rotate(9deg); }
+    100% { transform: rotate(-9deg); }
+  }
+
+  /* 随机数字 */
+  .range-row { display: flex; align-items: center; gap: 10px; }
+  .range-row input { width: 130px; text-align: center; }
+  .range-row span { color: var(--muted); font-size: 15px; }
+
+  /* 使用说明页 */
+  .help-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    max-width: 640px;
+    width: 100%;
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  .help-box h3 {
+    color: var(--accent-2);
+    font-size: 16px;
+    margin: 14px 0 6px;
+  }
+  .help-box h3:first-child { margin-top: 0; }
+  .help-box ul { padding-left: 20px; }
+  .help-box li { margin-bottom: 5px; }
+  .help-box b { color: var(--accent); }
+  /* ---- 转盘标签栏（Excel 工作表式） ---- */
+  #wheel-tabs {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    max-width: 100%;
+    overflow-x: auto;
+    margin-bottom: -1px;
+    align-self: flex-start;
+    padding-left: 8px;
+  }
+  .wheel-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    cursor: pointer;
+    font-size: 15px;
+    color: var(--muted);
+    white-space: nowrap;
+    user-select: none;
+  }
+  .wheel-tab:hover { color: var(--text); }
+  .wheel-tab.active {
+    background: var(--panel);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: bold;
+  }
+  .wheel-tab .tab-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+  .wheel-tab input.inline-edit {
+    width: 110px;
+    min-width: 0;
+    padding: 2px 6px;
+    font-size: 13px;
+  }
+  .wheel-tab .btn-del { font-size: 12px; padding: 0 2px; }
+  #btn-add-tab {
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    border-radius: 10px 10px 0 0;
+    padding: 9px 16px;
+    font-size: 16px;
+  }
+  #btn-add-tab:hover { border-color: var(--accent); color: var(--accent); }
+  .tabs-hint { margin-bottom: 6px; align-self: flex-start; padding-left: 8px; font-size: 13px; }
+
+  .wheel-wrap { position: relative; }
+  /* 画布按视口自适应：矮窗口（预览面板/手机）也装得下，转盘始终可见 */
+  canvas {
+    cursor: pointer;
+    display: block;
+    width: min(94vw, 62vh, 540px);
+    height: auto;
+    flex-shrink: 0;
+  }
+  #btn-spin {
+    margin-top: 4px;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 14px 58px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 4px 18px color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+  #btn-spin:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ---- 结果弹窗 ---- */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .modal.show { display: flex; }
+  .modal-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px 40px;
+    text-align: center;
+    animation: pop .3s ease;
+    max-width: 90vw;
+    box-shadow: 0 8px 40px rgba(0,0,0,.25);
+  }
+  @keyframes pop {
+    from { transform: scale(.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .modal-card h3 { color: var(--muted); font-size: 16px; font-weight: normal; margin-bottom: 12px; }
+  #result-text { font-size: 48px; font-weight: bold; color: var(--accent-2); margin-bottom: 24px; word-break: break-all; }
+  .modal-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  /* ---- Toast ---- */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-size: 15px;
+    transition: transform .3s ease;
+    z-index: 200;
+    max-width: 80vw;
+    box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: var(--accent); color: var(--accent-2); font-weight: bold; }
+
+  /* ---- 安装横幅 ---- */
+  #install-banner {
+    display: none;
+    margin-top: 0;
+    background: rgba(255, 255, 255, .85);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    max-width: 420px;
+    text-align: center;
+  }
+  #install-banner.show { display: block; }
+  #install-banner p { font-size: 14px; color: var(--muted); margin-bottom: 10px; line-height: 1.6; }
+  #btn-install {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    font-weight: bold;
+    padding: 10px 28px;
+    font-size: 15px;
+  }
+
+  /* ---- 移动端适配 ---- */
+  @media (max-width: 700px) {
+    body { flex-direction: column; }
+    main {
+      padding-top: calc(16px + env(safe-area-inset-top));
+      justify-content: flex-start;
+      gap: 12px;
+      overflow-y: auto;
+    }
+    canvas { max-width: 84vw; }
+    #btn-spin { font-size: 18px; padding: 13px 48px; }
+    aside { width: min(380px, 100vw); }
+    #install-banner { margin: 18px auto 0; }
+  }
+</style>
+</head>
+<body>
+<aside id="panel">
+  <button class="panel-close" id="btn-close-panel">收起 ✕</button>
+  <h1>🎡 幸运转盘</h1>
+  <p class="subtitle">选不出来？让转盘替你决定。</p>
+
+  <section>
+    <h2>当前转盘的选项 <span id="item-count" class="muted"></span></h2>
+    <ul id="item-list"></ul>
+    <label for="item-name">新选项名称（1~30 字，双击已有选项名可重命名）</label>
+    <label for="item-weight" style="margin-top:4px">权重（可选，1~100，越大越容易被转到）</label>
+    <div class="row" style="margin-top:4px">
+      <input type="text" id="item-name" placeholder="比如：吃火锅" maxlength="30">
+      <input type="number" id="item-weight" placeholder="1" min="1" max="100" style="width:80px">
+      <button id="btn-add">添加</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>主题（所有转盘共用）</h2>
+    <select id="theme-select"></select>
+    <div id="custom-themes"></div>
+
+    <h2 style="margin-top:18px">新建主题</h2>
+    <label for="theme-mode">配色模式</label>
+    <select id="theme-mode">
+      <option value="multi">多色（自己挑几个颜色）</option>
+      <option value="gradient">单色渐变（选一个颜色，自动生成深浅）</option>
+    </select>
+    <label for="theme-name">主题名（1~20 字）</label>
+    <div class="row">
+      <input type="text" id="theme-name" placeholder="比如：我的配色" maxlength="20">
+    </div>
+    <div class="color-tools">
+      <button class="ghost small" id="btn-add-color">+ 颜色</button>
+      <button class="ghost small" id="btn-remove-color">− 颜色</button>
+    </div>
+    <div id="draft-colors"></div>
+    <button id="btn-create-theme" class="ghost">创建主题</button>
+  </section>
+
+  <section>
+    <h2>当前转盘设置</h2>
+    <label class="checkbox-row">
+      <input type="checkbox" id="remove-winner">
+      转中后自动移除该选项（适合淘汰制）
+    </label>
+    <p class="muted" style="margin-top:12px">给单个扇形设置贴图：点选项右侧的 🖼 按钮，会用裁剪编辑器打开。图片会自动压缩保存在本地。</p>
+    <input type="file" id="item-img-file" accept="image/*" style="display:none">
+    <p class="muted" style="margin-top:8px">所有数据自动保存在浏览器本地。</p>
+  </section>
+
+  <section>
+    <h2>分享当前转盘</h2>
+    <button id="btn-gen-code" class="ghost">生成分享码</button>
+    <textarea id="share-code" class="code-box" readonly placeholder="点上面的按钮生成分享码" style="display:none;margin-top:8px"></textarea>
+    <p id="share-info" class="muted" style="display:none;margin-top:6px"></p>
+    <div class="share-tools" id="share-tools" style="display:none">
+      <button id="btn-copy-code" class="small">复制分享码</button>
+    </div>
+    <p class="muted" style="margin-top:8px">分享码自动包含当前转盘和跳转链上的所有转盘（🔗 关联的算一组），以及各自的配色主题；盘面图片和硬币图片体积大，不包含在分享码里。</p>
+  </section>
+
+  <section>
+    <h2>导入转盘</h2>
+    <textarea id="import-code" class="code-box" placeholder="粘贴别人发给你的分享码"></textarea>
+    <div class="share-tools">
+      <button id="btn-import">导入为新转盘</button>
+    </div>
+  </section>
+</aside>
+
+<main>
+  <div id="page-wheel" class="page active">
+    <div id="wheel-tabs"></div>
+    <p class="muted tabs-hint">双击标签名可重命名转盘，＋ 新建转盘</p>
+    <div class="wheel-wrap">
+      <canvas id="wheel" width="560" height="560"></canvas>
+    </div>
+    <button id="btn-spin">开始转！</button>
+    <p class="muted" style="margin-top:-4px">点击转盘或按钮即可开始</p>
+    <div id="install-banner">
+      <p id="install-hint"></p>
+      <button id="btn-install">📥 安装到手机桌面</button>
+    </div>
+  </div>
+
+  <div id="page-coin" class="page">
+    <p class="page-title">🪙 抛硬币</p>
+    <p class="page-sub">正面反面，各 50%，神仙也作不了弊</p>
+    <div class="coin" id="coin"></div>
+    <p class="big-result" id="coin-result"></p>
+    <button id="btn-flip" class="page-action">抛！</button>
+    <p class="muted" style="margin-top:6px">自定义正反面（从相册/文件选图，自动压缩）</p>
+    <div class="row">
+      <button id="btn-coin-front" class="ghost small">正面图片</button>
+      <button id="btn-coin-back" class="ghost small">反面图片</button>
+      <button id="btn-coin-reset" class="ghost small">恢复默认</button>
+    </div>
+    <input type="file" id="coin-face-file" accept="image/*" style="display:none">
+  </div>
+
+  <div id="page-dice" class="page">
+    <p class="page-title">🎲 丢骰子</p>
+    <p class="page-sub">普通六面骰，最多同时丢 6 个</p>
+    <div class="range-row">
+      <span>骰子数量</span>
+      <select id="dice-count" style="width:90px">
+        <option value="1">1 个</option>
+        <option value="2">2 个</option>
+        <option value="3">3 个</option>
+        <option value="4">4 个</option>
+        <option value="5">5 个</option>
+        <option value="6">6 个</option>
+      </select>
+    </div>
+    <div class="dice-faces" id="dice-faces"><span class="die">🎲</span></div>
+    <p class="big-result" id="dice-result"></p>
+    <button id="btn-roll" class="page-action">摇！</button>
+  </div>
+
+  <div id="page-number" class="page">
+    <p class="page-title">🔢 随机数字</p>
+    <p class="page-sub">规定范围内的随机整数（含两端）</p>
+    <div class="range-row">
+      <input type="number" id="num-min" placeholder="最小值" value="1">
+      <span>到</span>
+      <input type="number" id="num-max" placeholder="最大值" value="100">
+    </div>
+    <div class="range-row">
+      <span>生成个数</span>
+      <input type="number" id="num-count" value="1" min="1" max="100" style="width:90px">
+      <label class="checkbox-row" style="margin:0">
+        <input type="checkbox" id="num-repeat" checked>
+        允许重复
+      </label>
+    </div>
+    <p class="big-result" id="num-result">？</p>
+    <button id="btn-rand" class="page-action">生成！</button>
+  </div>
+
+  <div id="page-help" class="page">
+    <p class="page-title">📖 使用说明</p>
+    <div class="help-box">
+      <h3>🎡 转盘</h3>
+      <ul>
+        <li><b>添加选项</b>：点底部栏的「⚙️ 设置」打开设置抽屉，输入名称和权重（权重越大越容易被转到），点「添加」。再点「收起 ✕」或灰色区域可关闭抽屉。</li>
+        <li><b>多个转盘</b>：顶部标签栏，点「＋」新建，点标签切换，活动标签上的「✕」删除。</li>
+        <li><b>重命名</b>：双击标签名或双击选项名，直接改字。</li>
+        <li><b>排序</b>：选项右侧的「↑ ↓」调整谁在前谁在后，转盘扇区跟着变。</li>
+        <li><b>跳转</b>：点选项旁的「🔗」，可以设置转到这个选项后跳去别的转盘，或跳去硬币/骰子/数字工具页。转中后弹窗里会出现跳转按钮。</li>
+        <li><b>扇形贴图</b>：点选项旁的「🖼」，选一张图，在裁剪编辑器里拖动/缩放/旋转/翻转，确认后图片就贴进那个扇形。再点一次可选「更换」或「清除」。</li>
+        <li><b>主题换肤</b>：在「⚙️ 设置」抽屉里下拉切换 10 种配色，整页按钮、指针、中心点都会跟着变色。「新建主题」可选多色自选或单色渐变（选一个颜色自动生成深浅，选项越多渐变越顺滑）。</li>
+        <li><b>淘汰制</b>：勾选「转中后自动移除该选项」，适合多人轮流淘汰。</li>
+        <li><b>分享</b>：「生成分享码」会把当前转盘和它跳转链上的所有转盘打包成一串码，发给朋友；对方在「导入转盘」里粘贴即可得到一模一样的转盘（配色也带上）。</li>
+      </ul>
+
+      <h3>🪙 硬币</h3>
+      <ul>
+        <li>点「抛！」，硬币翻转后停在正面或反面，各 50%。</li>
+        <li>默认是一元硬币样式（正面 1元、背面菊花）；点「正面图片 / 反面图片」可以换成自己的图，会先进入裁剪编辑器。</li>
+      </ul>
+
+      <h3>🎲 骰子</h3>
+      <ul>
+        <li>选 1~6 个骰子，点「摇！」，显示每个骰子的点数，多个时显示总和。</li>
+      </ul>
+
+      <h3>🔢 随机数字</h3>
+      <ul>
+        <li>输入最小值和最大值（整数，含两端），点「生成！」。</li>
+        <li>「生成个数」可一次出 1~100 个；关闭「允许重复」则一批之内数字互不重复。</li>
+      </ul>
+
+      <h3>📱 浏览器要求（重要）</h3>
+      <ul>
+        <li><b>不追求安装怎么办</b>：如果你只是临时用一下，不需要在桌面设置快捷方式、也不需要离线使用，那么用任何普通浏览器打开链接就行——转盘、硬币、骰子、数字这些功能在什么浏览器里都能正常用。</li>
+        <li><b>安卓手机</b>：请用 <b>Chrome</b> 或 <b>Edge</b> 打开，安装到桌面和离线功能都完整支持。</li>
+        <li><b>iPhone</b>：必须用 <b>Safari</b>（底部分享按钮 → 添加到主屏幕），其他浏览器都装不了。</li>
+        <li><b>注意</b>：微信/QQ 里直接点开的内置浏览器有时会拦截或排版异常，建议把链接复制出来，用手机自带的浏览器打开。</li>
+        <li><b>电脑</b>：Chrome / Edge 直接用，点地址栏右侧的安装图标可装成桌面应用。</li>
+      </ul>
+
+      <h3>💾 数据与离线</h3>
+      <ul>
+        <li>所有转盘、主题、图片都自动保存在这台设备的浏览器里，换设备不会同步。</li>
+        <li>安装到手机桌面后（浏览器菜单里的「添加到主屏幕」，或页面里的安装按钮），断网也能正常使用。</li>
+        <li>分享码不包含图片，跳转链接会自动映射到对方设备上的新转盘。</li>
+      </ul>
+    </div>
+  </div>
+
+  <nav id="bottom-nav">
+    <button class="nav-btn active" data-page="wheel"><span class="nav-icon">🎡</span>转盘</button>
+    <button class="nav-btn" data-page="coin"><span class="nav-icon">🪙</span>硬币</button>
+    <button class="nav-btn" data-page="dice"><span class="nav-icon">🎲</span>骰子</button>
+    <button class="nav-btn" data-page="number"><span class="nav-icon">🔢</span>数字</button>
+    <button class="nav-btn" data-page="help"><span class="nav-icon">📖</span>说明</button>
+    <button class="nav-btn" data-page="panel"><span class="nav-icon">⚙️</span>设置</button>
+  </nav>
+</main>
+
+<div id="panel-backdrop"></div>
+
+<div class="modal" id="result-modal">
+  <div class="modal-card">
+    <h3>🎉 就决定是你了：</h3>
+    <div id="result-text"></div>
+    <div class="modal-actions">
+      <button id="btn-jump" style="display:none">进入 →</button>
+      <button id="btn-remove-winner">移除该选项</button>
+      <button id="btn-again">再转一次</button>
+      <button class="ghost" id="btn-close-modal">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="crop-modal">
+  <div class="modal-card">
+    <h3>✂️ 裁剪图片</h3>
+    <canvas id="crop-canvas" width="320" height="320"></canvas>
+    <div class="crop-zoom-row">
+      <span class="muted">缩放</span>
+      <input type="range" id="crop-zoom" min="1" max="4" step="0.01" value="1">
+    </div>
+    <div class="crop-tools">
+      <button id="btn-rot-left" class="ghost small">⟲ 旋转</button>
+      <button id="btn-rot-right" class="ghost small">⟳ 旋转</button>
+      <button id="btn-flip-h" class="ghost small">↔ 翻转</button>
+      <button id="btn-flip-v" class="ghost small">↕ 翻转</button>
+    </div>
+    <p class="crop-hint">圆形区域内是最终效果 · 拖动图片调整位置 · 手机上双指捏合缩放</p>
+    <div class="modal-actions" style="margin-top:14px">
+      <button id="btn-crop-ok">✓ 使用这张</button>
+      <button class="ghost" id="btn-crop-cancel">取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/**
+ * ============================================================
+ *  幸运转盘 · 类型安全设计（多转盘版）
+ * ============================================================
+ *  数据模型与同目录 WheelModels.cs 中的 C# 模型对应（v2：多转盘）。
+ *
+ *  类型安全策略（模拟 C# 强类型 + Result<T> 模式）：
+ *  1. 领域类型用 @typedef 声明，运行时用 Object.freeze 冻结；
+ *  2. 所有外部输入必须经过 validate 函数，返回 Result<T>，
+ *     不允许绕过校验直接使用裸数据；
+ *  3. 不变式由唯一工厂函数 create* 保证，构造后不可变。
+ * ============================================================
+ */
+
+'use strict';
+
+// ------------------------- 类型定义 -------------------------
+
+/** @typedef {{ readonly id: string, readonly name: string, readonly weight: number, readonly linkTabId?: string, readonly img?: string }} WheelItem 选项（linkTabId：跳转目标；img：该扇形的贴图） */
+
+/**
+ * 主题（gradientBase 存在时为"单色渐变"主题：绘制时按选项数现场生成深浅；
+ * accent 为整页换肤强调色——选中主题后按钮/指针/标签等全部跟随变色）
+ * @typedef {{ readonly id: string, readonly name: string, readonly colors: readonly string[], readonly builtin: boolean, readonly gradientBase?: string, readonly accent?: string }} WheelTheme 主题
+ */
+
+/**
+ * 转盘档位（对应 Excel 的一张工作表）
+ * @typedef {{ readonly id: string, readonly name: string, readonly items: readonly WheelItem[], readonly themeId: string, readonly removeWinner: boolean }} WheelTab
+ */
+
+/** @typedef {{ readonly wheels: readonly WheelTab[], readonly activeId: string, readonly customThemes: readonly WheelTheme[] }} AppState 应用总状态 */
+
+/**
+ * @template T
+ * @typedef {{ readonly ok: true, readonly value: T } | { readonly ok: false, readonly error: string }} Result
+ */
+
+// ------------------------- Result 工具 -------------------------
+
+/** @type {<T>(value: T) => { ok: true, value: T }} */
+const Ok = (value) => Object.freeze({ ok: true, value });
+/** @type {(error: string) => { ok: false, error: string }} */
+const Err = (error) => Object.freeze({ ok: false, error });
+
+// ------------------------- 校验器 -------------------------
+
+/** @type {(v: unknown, min: number, max: number) => boolean} */
+const isStringInLength = (v, min, max) =>
+  typeof v === 'string' && v.trim().length >= min && v.trim().length <= max;
+
+/** @type {(v: unknown) => boolean} */
+const isHexColor = (v) =>
+  typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
+
+/** @type {(v: unknown) => boolean} */
+const isPositiveFinite = (v) =>
+  typeof v === 'number' && Number.isFinite(v) && v > 0;
+
+/** @type {(v: unknown, max: number) => boolean} */
+const isSafeArrayLength = (v, max) => Array.isArray(v) && v.length <= max;
+
+/** @type {() => string} */
+function genId(prefix) {
+  return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/**
+ * 校验并构造 WheelItem（不可变对象，唯一入口）
+ * @param {unknown} name
+ * @param {unknown} weight
+ * @param {string} [fixedId] 重命名时保留原 id
+ * @param {unknown} [linkTabId] 跳转目标转盘 id 或 tool:coin/dice/number
+ * @param {unknown} [img] 该扇形的贴图 dataURL（自动压缩过）
+ * @returns {Result<WheelItem>}
+ */
+function createItem(name, weight, fixedId, linkTabId, img) {
+  if (!isStringInLength(name, 1, 30)) {
+    return Err(`选项名必须是 1~30 个字符（收到：${JSON.stringify(name ?? null)}）`);
+  }
+  if (weight === '' || weight === undefined || weight === null) weight = 1;
+  const w = typeof weight === 'string' ? Number(weight) : weight;
+  if (!isPositiveFinite(w)) return Err(`权重必须是大于 0 的数字（收到：${JSON.stringify(weight)}）`);
+  if (w > 100) return Err('权重不能超过 100');
+  if (linkTabId !== undefined && linkTabId !== null && typeof linkTabId !== 'string') {
+    return Err('跳转目标格式不正确');
+  }
+  if (typeof linkTabId === 'string' && linkTabId.startsWith('tool:')
+      && !/^tool:(coin|dice|number)$/.test(linkTabId)) {
+    return Err('未知的工具跳转目标');
+  }
+  if (typeof linkTabId === 'string' && !linkTabId.startsWith('tool:') && linkTabId.trim() === '') {
+    return Err('跳转目标不能为空');
+  }
+  if (img !== undefined && img !== null
+      && (typeof img !== 'string' || !/^data:image\/(png|jpeg|jpg|webp);base64,/.test(img) || img.length > 120000)) {
+    return Err('选项图片无效或过大');
+  }
+  return Ok(Object.freeze(Object.assign(
+    { id: fixedId || genId('item'), name: String(name).trim(), weight: w },
+    typeof linkTabId === 'string' ? { linkTabId: linkTabId } : {},
+    typeof img === 'string' ? { img: img } : {}
+  )));
+}
+
+/**
+ * 校验并构造 WheelTheme
+ * @param {unknown} name
+ * @param {unknown} colors
+ * @param {string} [fixedId]
+ * @param {unknown} [gradientBase] 单色渐变的基色（#RRGGBB）
+ * @returns {Result<WheelTheme>}
+ */
+function createTheme(name, colors, fixedId, gradientBase) {
+  if (!isStringInLength(name, 1, 20)) return Err('主题名必须是 1~20 个字符');
+  if (!Array.isArray(colors) || colors.length < 2) return Err('主题至少需要 2 种颜色');
+  if (!isSafeArrayLength(colors, 12)) return Err('主题颜色最多 12 种');
+  for (const c of colors) {
+    if (!isHexColor(c)) return Err(`颜色格式不正确：${JSON.stringify(c)}，需要 #RRGGBB`);
+  }
+  if (gradientBase !== undefined && gradientBase !== null && !isHexColor(gradientBase)) {
+    return Err(`渐变基色格式不正确：${JSON.stringify(gradientBase)}，需要 #RRGGBB`);
+  }
+  // 整页换肤强调色：渐变主题用基色，多色主题取中间调
+  const accent = gradientBase || colors[Math.floor(colors.length / 2)];
+  return Ok(Object.freeze({
+    id: fixedId || genId('theme'),
+    name: String(name).trim(),
+    colors: Object.freeze([...colors]),
+    builtin: false,
+    gradientBase: typeof gradientBase === 'string' ? gradientBase : undefined,
+    accent: accent,
+  }));
+}
+
+/** @type {(name: unknown) => Result<string>} */
+function validateTabName(name) {
+  if (!isStringInLength(name, 1, 20)) return Err('转盘名必须是 1~20 个字符');
+  return Ok(String(name).trim());
+}
+
+/**
+ * 校验单个转盘档位
+ * @param {unknown} raw
+ * @returns {Result<WheelTab>}
+ */
+function validateTab(raw) {
+  if (raw === null || typeof raw !== 'object') return Err('转盘数据不是对象');
+  const o = /** @type {Record<string, unknown>} */ (raw);
+  const nameR = validateTabName(o.name);
+  if (!nameR.ok) return Err(nameR.error);
+  if (!Array.isArray(o.items) || o.items.length < 2) return Err(`「${nameR.value}」的选项数量必须 ≥ 2`);
+  if (!isSafeArrayLength(o.items, 100)) return Err('选项最多 100 个');
+  /** @type {WheelItem[]} */
+  const items = [];
+  for (const it of o.items) {
+    const io = /** @type {Record<string, unknown>} */ (it);
+    const r = createItem(io && io.name, io && io.weight, typeof io.id === 'string' ? io.id : undefined, io && io.linkTabId, io && io.img);
+    if (!r.ok) return Err(`「${nameR.value}」${r.error}`);
+    items.push(r.value);
+  }
+  if (typeof o.themeId !== 'string') return Err(`「${nameR.value}」themeId 缺失`);
+  if (typeof o.removeWinner !== 'boolean') return Err(`「${nameR.value}」removeWinner 必须是布尔值`);
+  return Ok(Object.freeze({
+    id: typeof o.id === 'string' ? o.id : genId('tab'),
+    name: nameR.value,
+    items: Object.freeze(items),
+    themeId: o.themeId,
+    removeWinner: o.removeWinner,
+  }));
+}
+
+/**
+ * 校验应用总状态（localStorage 读回的整个数据）
+ * @param {unknown} raw
+ * @returns {Result<AppState>}
+ */
+function validateAppState(raw) {
+  if (raw === null || typeof raw !== 'object') return Err('状态不是对象');
+  const o = /** @type {Record<string, unknown>} */ (raw);
+  if (!Array.isArray(o.wheels) || o.wheels.length < 1) return Err('至少需要 1 个转盘');
+  if (!isSafeArrayLength(o.wheels, 20)) return Err('转盘最多 20 个');
+  /** @type {WheelTab[]} */
+  const wheels = [];
+  for (const w of o.wheels) {
+    const r = validateTab(w);
+    if (!r.ok) return Err(r.error);
+    wheels.push(r.value);
+  }
+  const activeId = o.activeId;
+  if (typeof activeId !== 'string' || !wheels.some((w) => w.id === activeId)) {
+    return Err('activeId 无效');
+  }
+  /** @type {WheelTheme[]} */
+  const customThemes = [];
+  if (Array.isArray(o.customThemes)) {
+    for (const t of o.customThemes) {
+      const to = /** @type {Record<string, unknown>} */ (t);
+      const r = createTheme(to && to.name, to && to.colors, typeof to.id === 'string' ? to.id : undefined, to && to.gradientBase);
+      if (!r.ok) return Err(`自定义主题校验失败：${r.error}`);
+      customThemes.push(r.value);
+    }
+  }
+  return Ok(Object.freeze({
+    wheels: Object.freeze(wheels),
+    activeId: activeId,
+    customThemes: Object.freeze(customThemes),
+  }));
+}
+
+// ------------------------- 内置主题（不可变） -------------------------
+
+/** @type {readonly WheelTheme[]} */
+const BUILTIN_THEMES = Object.freeze([
+  // 蓝色系
+  Object.freeze({ id: 'classic', name: '深海蓝', accent: '#2563eb', colors: Object.freeze(['#1e3a8a', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#1d4ed8']), builtin: true }),
+  Object.freeze({ id: 'candy', name: '冰川蓝', accent: '#0284c7', colors: Object.freeze(['#e0f2fe', '#bae6fd', '#7dd3fc', '#38bdf8', '#0ea5e9', '#0284c7']), builtin: true }),
+  Object.freeze({ id: 'night', name: '深空蓝', accent: '#1d4ed8', colors: Object.freeze(['#0c1b4d', '#16308f', '#1d4ed8', '#2563eb', '#3b82f6', '#93c5fd']), builtin: true }),
+  // 红色系
+  Object.freeze({ id: 'crimson', name: '绛红', accent: '#dc2626', colors: Object.freeze(['#7f1d1d', '#991b1b', '#b91c1c', '#dc2626', '#ef4444', '#f87171']), builtin: true }),
+  Object.freeze({ id: 'ember', name: '落日橙红', accent: '#ea580c', colors: Object.freeze(['#7c2d12', '#c2410c', '#ea580c', '#f97316', '#fb923c', '#fdba74']), builtin: true }),
+  // 绿色系
+  Object.freeze({ id: 'forest', name: '翡翠绿', accent: '#059669', colors: Object.freeze(['#064e3b', '#065f46', '#047857', '#059669', '#10b981', '#34d399']), builtin: true }),
+  // 紫色系
+  Object.freeze({ id: 'grape', name: '葡萄紫', accent: '#7c3aed', colors: Object.freeze(['#4c1d95', '#5b21b6', '#6d28d9', '#7c3aed', '#8b5cf6', '#a78bfa']), builtin: true }),
+  // 粉色系
+  Object.freeze({ id: 'blossom', name: '樱花粉', accent: '#ec4899', colors: Object.freeze(['#9d174d', '#be185d', '#db2777', '#ec4899', '#f472b6', '#f9a8d4']), builtin: true }),
+  // 金色系
+  Object.freeze({ id: 'amber', name: '鎏金', accent: '#d97706', colors: Object.freeze(['#78350f', '#b45309', '#d97706', '#f59e0b', '#fbbf24', '#fcd34d']), builtin: true }),
+  // 青色系
+  Object.freeze({ id: 'teal', name: '青碧', accent: '#0d9488', colors: Object.freeze(['#134e4a', '#115e59', '#0f766e', '#0d9488', '#14b8a6', '#2dd4bf']), builtin: true }),
+]);
+
+// ------------------------- 持久化 -------------------------
+
+const STORAGE_KEY = 'wheel_app_state_v2';
+const LEGACY_KEY = 'wheel_app_state_v1';
+
+/** @returns {AppState} */
+function loadApp() {
+  const defaultItems = () => Object.freeze([
+    createItem('吃火锅', 1).value,
+    createItem('吃烧烤', 1).value,
+    createItem('吃面', 1).value,
+    createItem('吃食堂', 1).value,
+  ]);
+  try {
+    // v2 存档
+    const raw2 = localStorage.getItem(STORAGE_KEY);
+    if (raw2) {
+      const r = validateAppState(JSON.parse(raw2));
+      if (r.ok) return r.value;
+      console.warn('[wheel] v2 存档校验失败：', r.error);
+    }
+    // v1 旧存档迁移：旧单转盘 → 第一个档位
+    const raw1 = localStorage.getItem(LEGACY_KEY);
+    if (raw1) {
+      const old = JSON.parse(raw1);
+      const r = validateTab({
+        id: 'tab_migrated',
+        name: '转盘 1',
+        items: old.items,
+        themeId: old.themeId,
+        removeWinner: old.removeWinner,
+      });
+      if (r.ok) {
+        return Object.freeze({
+          wheels: Object.freeze([r.value]),
+          activeId: r.value.id,
+          customThemes: Object.freeze([]),
+        });
+      }
+      console.warn('[wheel] v1 迁移失败：', r.error);
+    }
+  } catch (e) {
+    console.warn('[wheel] 存档解析失败：', e);
+  }
+  // 默认状态
+  return Object.freeze({
+    wheels: Object.freeze([Object.freeze({
+      id: 'tab_default',
+      name: '转盘 1',
+      items: defaultItems(),
+      themeId: 'candy',
+      removeWinner: false,
+    })]),
+    activeId: 'tab_default',
+    customThemes: Object.freeze([]),
+  });
+}
+
+/** @param {AppState} appState */
+function saveApp(appState) {
+  const r = validateAppState(appState);
+  if (!r.ok) { console.error('[wheel] 拒绝保存非法状态：', r.error); return; }
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(r.value));
+    localStorage.removeItem(LEGACY_KEY);
+  } catch (e) {
+    // 图片较多时可能触顶（localStorage 约 5MB），不允许静默丢数据
+    toast('保存失败：本地存储空间不足，请删除一些图片或转盘', true);
+    console.error('[wheel] localStorage 写入失败：', e);
+  }
+}
+
+// ------------------------- 应用主逻辑 -------------------------
+
+/** @type {AppState} */
+let app = loadApp();
+/** 转盘角度只存内存（换档不需要持久化角度） */
+/** @type {Map<string, number|null>} */
+const angleByTab = new Map();
+/** 盘面图片缓存：dataURL -> HTMLImageElement（null 表示加载中） */
+const bgImageCache = new Map();
+let spinning = false;
+
+const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('wheel'));
+const ctx = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d'));
+const itemList = document.getElementById('item-list');
+const themeSelect = document.getElementById('theme-select');
+const tabsBar = document.getElementById('wheel-tabs');
+const resultModal = document.getElementById('result-modal');
+const resultText = document.getElementById('result-text');
+const toastEl = document.getElementById('toast');
+
+/** @type {(msg: string, isError?: boolean) => void} */
+function toast(msg, isError) {
+  toastEl.textContent = msg;
+  toastEl.className = isError ? 'toast show error' : 'toast show';
+  clearTimeout(Number(toastEl.dataset.timer || 0));
+  toastEl.dataset.timer = String(setTimeout(function () { toastEl.className = 'toast'; }, 2600));
+}
+
+/** @type {() => WheelTab} */
+function currentTab() {
+  return app.wheels.find(function (w) { return w.id === app.activeId; }) || app.wheels[0];
+}
+
+/** @type {() => readonly WheelTheme[]} */
+function allThemes() {
+  return BUILTIN_THEMES.concat(app.customThemes);
+}
+
+/** @type {(id: string) => WheelTheme} */
+function getTheme(id) {
+  const ts = allThemes();
+  return ts.find(function (t) { return t.id === id; }) || ts[0];
+}
+
+// ---- 渲染 ----
+
+const TAU = Math.PI * 2;
+
+/** @type {() => number} */
+function totalWeight() {
+  return currentTab().items.reduce(function (s, it) { return s + it.weight; }, 0);
+}
+
+function drawWheel() {
+  const tab = currentTab();
+  const theme = getTheme(tab.themeId);
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  const radius = Math.min(W, H) / 2 - 14;
+  const n = tab.items.length;
+  const angle = angleByTab.get(tab.id);
+  const startAngle = (angle === undefined || angle === null) ? 0 : angle;
+  // 单色渐变主题：按当前选项数现场生成深浅（选项越多越接近连续渐变）
+  const sliceColors = theme.gradientBase ? makeShades(theme.gradientBase, Math.max(n, 2)) : theme.colors;
+  // 扇形贴图缓存：dataURL -> HTMLImageElement（null 表示加载中）
+
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius + 10, 0, TAU);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+  ctx.strokeStyle = '#bcd4f7';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  const slice = TAU / n;
+  for (let i = 0; i < n; i++) {
+    const it = tab.items[i];
+    const a0 = startAngle + i * slice;
+    const a1 = a0 + slice;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, radius, a0, a1);
+    ctx.closePath();
+    const color = sliceColors[i % sliceColors.length];
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // 该扇形的专属贴图：裁进扇形内，cover 模式
+    if (it.img) {
+      let itemImg = bgImageCache.get(it.img) || null;
+      if (!bgImageCache.has(it.img)) {
+        bgImageCache.set(it.img, null); // 标记加载中
+        const img = new Image();
+        img.onload = function () { bgImageCache.set(it.img, img); drawWheel(); };
+        img.onerror = function () { bgImageCache.delete(it.img); };
+        img.src = it.img;
+      }
+      if (itemImg) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, radius, a0, a1);
+        ctx.closePath();
+        ctx.clip();
+        const scale = Math.max((radius * 2) / itemImg.width, (radius * 2) / itemImg.height);
+        const dw = itemImg.width * scale, dh = itemImg.height * scale;
+        ctx.drawImage(itemImg, cx - dw / 2, cy - dh / 2, dw, dh);
+        ctx.restore();
+        // 贴图后补一条分隔线
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, radius, a0, a1);
+        ctx.closePath();
+        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+    }
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(a0 + slice / 2);
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    // 统一白字 + 深色描边：任何扇区颜色（含浅色和贴图）上都清晰
+    ctx.fillStyle = '#fff';
+    const weight = tab.items[i].weight;
+    const label = weight !== 1 ? tab.items[i].name + ' ×' + weight : tab.items[i].name;
+    ctx.font = '600 ' + (n > 16 ? 15 : n > 10 ? 18 : 21) + 'px "Microsoft YaHei", sans-serif';
+    ctx.lineWidth = 3;
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+    ctx.strokeText(truncate(label, 12), radius - 14, 0);
+    ctx.fillText(truncate(label, 12), radius - 14, 0);
+    ctx.restore();
+  }
+
+  // 中心转针：中心一个小圆点，细针延伸到半径 60% 处，末端小箭头指向正上方
+  // 颜色跟随当前主题的强调色（整页换肤）
+  const uiAccent = theme.accent || '#2563eb';
+  const uiAccentDark = accentDarker(uiAccent);
+  const needleTip = cy - radius * 0.6;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 14);
+  ctx.lineTo(cx, needleTip);
+  ctx.strokeStyle = uiAccentDark;
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(cx, needleTip - 14);
+  ctx.lineTo(cx - 9, needleTip + 2);
+  ctx.lineTo(cx + 9, needleTip + 2);
+  ctx.closePath();
+  ctx.fillStyle = uiAccentDark;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, 12, 0, TAU);
+  ctx.fillStyle = uiAccent;
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+}
+
+/** @type {(s: string, max: number) => string} */
+function truncate(s, max) {
+  return s.length > max ? s.slice(0, max - 1) + '…' : s;
+}
+
+/**
+ * 通用行内重命名：把元素换成输入框，回车/失焦提交，Esc 取消
+ * @param {HTMLElement} el 要被替换的元素
+ * @param {string} current 当前值
+ * @param {number} maxLength
+ * @param {(newName: string) => void} onDone 提交回调（内部负责校验+toast）
+ */
+function startInlineEdit(el, current, maxLength, onDone) {
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'inline-edit';
+  input.maxLength = maxLength;
+  input.value = current;
+  el.replaceWith(input);
+  input.focus();
+  input.select();
+  let done = false;
+  function finish(commit) {
+    if (done) return;
+    done = true;
+    const val = input.value;
+    if (commit) onDone(val);
+    renderAll();
+  }
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') finish(true);
+    if (e.key === 'Escape') finish(false);
+  });
+  input.addEventListener('blur', function () { finish(true); });
+}
+
+// ---- 各区渲染 ----
+
+function renderTabs() {
+  tabsBar.innerHTML = '';
+  app.wheels.forEach(function (w) {
+    const tab = document.createElement('div');
+    tab.className = 'wheel-tab' + (w.id === app.activeId ? ' active' : '');
+    const label = document.createElement('span');
+    label.className = 'tab-name';
+    label.textContent = w.name;
+    label.title = '双击重命名';
+    tab.appendChild(label);
+    tab.addEventListener('click', function () { switchWheel(w.id); });
+    tab.addEventListener('dblclick', function (e) {
+      e.stopPropagation();
+      if (spinning) { toast('正在转，等停了再改', true); return; }
+      startInlineEdit(label, w.name, 20, function (val) { renameWheel(w.id, val); });
+    });
+    if (w.id === app.activeId && app.wheels.length > 1) {
+      const del = document.createElement('button');
+      del.className = 'btn-del';
+      del.textContent = '✕';
+      del.title = '删除这个转盘';
+      del.addEventListener('click', function (e) { e.stopPropagation(); deleteWheel(w.id); });
+      tab.appendChild(del);
+    }
+    tabsBar.appendChild(tab);
+  });
+  const plus = document.createElement('button');
+  plus.id = 'btn-add-tab';
+  plus.textContent = '＋';
+  plus.title = '新建转盘';
+  plus.addEventListener('click', addWheel);
+  tabsBar.appendChild(plus);
+}
+
+function renderItems() {
+  const tab = currentTab();
+  itemList.innerHTML = '';
+  tab.items.forEach(function (it, idx) {
+    const li = document.createElement('li');
+    const name = document.createElement('span');
+    name.className = 'item-name';
+    name.textContent = (idx + 1) + '. ' + it.name + (it.linkTabId ? ' ↗' : '');
+    name.title = '双击重命名';
+    name.addEventListener('dblclick', function () {
+      if (spinning) { toast('正在转，等停了再改', true); return; }
+      startInlineEdit(name, it.name, 30, function (val) { renameItem(it.id, val); });
+    });
+    const meta = document.createElement('span');
+    meta.className = 'item-meta';
+    meta.textContent = it.weight !== 1 ? '权重 ' + it.weight : '';
+
+    // 操作按钮组：上下移（谁在前谁在后）、跳转链接、删除
+    const btns = document.createElement('span');
+    btns.className = 'item-btns';
+
+    const up = document.createElement('button');
+    up.className = 'btn-move';
+    up.textContent = '↑';
+    up.title = '往前移一位';
+    up.disabled = idx === 0;
+    up.addEventListener('click', function () { moveItem(it.id, -1); });
+
+    const down = document.createElement('button');
+    down.className = 'btn-move';
+    down.textContent = '↓';
+    down.title = '往后移一位';
+    down.disabled = idx === tab.items.length - 1;
+    down.addEventListener('click', function () { moveItem(it.id, 1); });
+
+    const linkBtn = document.createElement('button');
+    linkBtn.className = 'btn-link';
+    linkBtn.textContent = '🔗';
+    linkBtn.title = '设置转中后跳转的转盘';
+    linkBtn.addEventListener('click', function () {
+      if (spinning) { toast('正在转，等停了再改', true); return; }
+      startLinkEdit(li, it);
+    });
+
+    const imgBtn = document.createElement('button');
+    imgBtn.className = 'btn-link';
+    imgBtn.textContent = it.img ? '🖼️' : '🖼';
+    imgBtn.title = '给这个扇形设置图片';
+    imgBtn.addEventListener('click', function () {
+      if (spinning) { toast('正在转，等停了再改', true); return; }
+      if (it.img) {
+        // 已有图片：确定=换图，取消=清除
+        if (window.confirm('「' + it.name + '」已设置图片。\n点「确定」更换图片，点「取消」清除图片。')) {
+          pendingItemImgId = it.id;
+          /** @type {HTMLInputElement} */ (document.getElementById('item-img-file')).click();
+        } else {
+          setItemImg(it.id, null);
+        }
+        return;
+      }
+      pendingItemImgId = it.id;
+      /** @type {HTMLInputElement} */ (document.getElementById('item-img-file')).click();
+    });
+
+    const del = document.createElement('button');
+    del.className = 'btn-del';
+    del.textContent = '✕';
+    del.title = '删除';
+    del.addEventListener('click', function () { removeItem(it.id); });
+
+    btns.appendChild(up);
+    btns.appendChild(down);
+    btns.appendChild(linkBtn);
+    btns.appendChild(imgBtn);
+    btns.appendChild(del);
+    li.appendChild(name);
+    li.appendChild(meta);
+    li.appendChild(btns);
+    itemList.appendChild(li);
+  });
+  document.getElementById('item-count').textContent = tab.items.length + ' 个选项';
+}
+
+/** @type {(id: string, dir: number) => void} dir: -1 往前 / 1 往后 */
+function moveItem(id, dir) {
+  if (spinning) { toast('正在转，等停了再改', true); return; }
+  const tab = currentTab();
+  const idx = tab.items.findIndex(function (it) { return it.id === id; });
+  const next = idx + dir;
+  if (idx < 0 || next < 0 || next >= tab.items.length) return;
+  const items = tab.items.slice();
+  const tmp = items[idx];
+  items[idx] = items[next];
+  items[next] = tmp;
+  app = appWithItems(items);
+  angleByTab.set(tab.id, null);
+  saveApp(app);
+  renderAll();
+}
+
+/**
+ * 行内编辑选项的跳转目标：把整个 li 换成下拉框（转盘 + 工具平级可选）
+ * @param {HTMLElement} li
+ * @param {WheelItem} item
+ */
+function startLinkEdit(li, item) {
+  const sel = document.createElement('select');
+  sel.className = 'inline-edit';
+  const none = document.createElement('option');
+  none.value = '';
+  none.textContent = '不跳转（转中就结束）';
+  sel.appendChild(none);
+  const wheelGroup = document.createElement('optgroup');
+  wheelGroup.label = '跳转到转盘';
+  app.wheels.forEach(function (w) {
+    if (w.id === app.activeId) return;
+    const opt = document.createElement('option');
+    opt.value = w.id;
+    opt.textContent = '「' + w.name + '」';
+    wheelGroup.appendChild(opt);
+  });
+  sel.appendChild(wheelGroup);
+  const toolGroup = document.createElement('optgroup');
+  toolGroup.label = '跳转到工具';
+  [
+    ['tool:coin', '🪙 抛硬币'],
+    ['tool:dice', '🎲 丢骰子'],
+    ['tool:number', '🔢 随机数字'],
+  ].forEach(function (pair) {
+    const opt = document.createElement('option');
+    opt.value = pair[0];
+    opt.textContent = pair[1];
+    toolGroup.appendChild(opt);
+  });
+  sel.appendChild(toolGroup);
+  sel.value = item.linkTabId || '';
+  li.replaceWith(sel);
+  sel.focus();
+  sel.addEventListener('change', function () {
+    setItemLink(item.id, sel.value || undefined);
+  });
+  sel.addEventListener('blur', function () { renderAll(); });
+  sel.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') renderAll();
+  });
+}
+
+/** @type {(id: string, linkTabId: string | undefined) => void} */
+function setItemLink(id, linkTabId) {
+  const tab = currentTab();
+  const target = tab.items.find(function (it) { return it.id === id; });
+  if (!target) return;
+  if (linkTabId && !app.wheels.some(function (w) { return w.id === linkTabId; })) {
+    toast('目标转盘不存在', true);
+    renderAll();
+    return;
+  }
+  if (linkTabId === target.linkTabId) { renderAll(); return; }
+  const r = createItem(target.name, target.weight, target.id, linkTabId);
+  if (!r.ok) { toast(r.error, true); renderAll(); return; }
+  app = appWithItems(tab.items.map(function (it) { return it.id === id ? r.value : it; }));
+  saveApp(app);
+  renderAll();
+  toast(linkTabId ? '已设置：转中后可跳转' : '已取消跳转');
+}
+
+function renderThemes() {
+  const tab = currentTab();
+  themeSelect.innerHTML = '';
+  allThemes().forEach(function (t) {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    const suffix = t.gradientBase ? '（单色渐变）' : (t.builtin ? '' : '（自定义）');
+    opt.textContent = t.name + suffix;
+    themeSelect.appendChild(opt);
+  });
+  themeSelect.value = tab.themeId;
+  renderCustomThemes();
+}
+
+function renderCustomThemes() {
+  const box = document.getElementById('custom-themes');
+  box.innerHTML = '';
+  if (app.customThemes.length === 0) {
+    box.innerHTML = '<p class="muted" style="margin-top:8px">还没有自定义主题</p>';
+    return;
+  }
+  app.customThemes.forEach(function (t) {
+    const row = document.createElement('div');
+    row.className = 'custom-theme-row';
+    const label = document.createElement('span');
+    label.style.flex = '1';
+    label.textContent = t.name;
+    const swatches = document.createElement('span');
+    swatches.className = 'swatches';
+    t.colors.forEach(function (c) {
+      const s = document.createElement('span');
+      s.className = 'swatch';
+      s.style.background = c;
+      swatches.appendChild(s);
+    });
+    const del = document.createElement('button');
+    del.className = 'btn-del';
+    del.textContent = '✕';
+    del.title = '删除主题';
+    del.addEventListener('click', function () { deleteTheme(t.id); });
+    row.appendChild(label);
+    row.appendChild(swatches);
+    row.appendChild(del);
+    box.appendChild(row);
+  });
+}
+
+function renderAll() {
+  drawWheel();
+  renderTabs();
+  renderItems();
+  renderThemes();
+  applyAccent(getTheme(currentTab().themeId));
+  /** @type {HTMLInputElement} */ (document.getElementById('remove-winner')).checked = currentTab().removeWinner;
+}
+
+// ---- 状态变更（全部走校验 + 保存） ----
+
+/** @type {(items: readonly WheelItem[]) => AppState} */
+function appWithItems(items) {
+  const tab = currentTab();
+  const newTab = Object.freeze({ id: tab.id, name: tab.name, items: Object.freeze(items), themeId: tab.themeId, removeWinner: tab.removeWinner });
+  return Object.freeze({
+    wheels: Object.freeze(app.wheels.map(function (w) { return w.id === tab.id ? newTab : w; })),
+    activeId: app.activeId,
+    customThemes: app.customThemes,
+  });
+}
+
+/** @type {(name: string, weight: string) => void} */
+function addItem(name, weight) {
+  const tab = currentTab();
+  const r = createItem(name, weight);
+  if (!r.ok) { toast(r.error, true); return; }
+  if (tab.items.length >= 100) { toast('最多 100 个选项', true); return; }
+  app = appWithItems(tab.items.concat([r.value]));
+  angleByTab.set(tab.id, null);
+  saveApp(app);
+  renderAll();
+  toast('已添加「' + r.value.name + '」');
+}
+
+/** @type {(id: string, newName: string) => void} */
+function renameItem(id, newName) {
+  const tab = currentTab();
+  const target = tab.items.find(function (it) { return it.id === id; });
+  if (!target) return;
+  // 重命名时保留权重、跳转链接和扇形贴图
+  const r = createItem(newName, target.weight, target.id, target.linkTabId, target.img);
+  if (!r.ok) { toast(r.error, true); return; }
+  app = appWithItems(tab.items.map(function (it) { return it.id === id ? r.value : it; }));
+  saveApp(app);
+  renderAll();
+  toast('已重命名为「' + r.value.name + '」');
+}
+
+/** @type {(id: string) => void} */
+function removeItem(id) {
+  const tab = currentTab();
+  if (tab.items.length <= 2) { toast('至少保留 2 个选项', true); return; }
+  app = appWithItems(tab.items.filter(function (it) { return it.id !== id; }));
+  angleByTab.set(tab.id, null);
+  saveApp(app);
+  renderAll();
+}
+
+/** @type {(id: string) => void} */
+function switchWheel(id) {
+  if (id === app.activeId) return;
+  if (spinning) { toast('正在转，等停了再换', true); return; }
+  if (!app.wheels.some(function (w) { return w.id === id; })) { toast('转盘不存在', true); return; }
+  app = Object.freeze({ wheels: app.wheels, activeId: id, customThemes: app.customThemes });
+  saveApp(app);
+  renderAll();
+}
+
+/** @type {() => void} */
+function addWheel() {
+  if (spinning) { toast('正在转，等停了再建', true); return; }
+  if (app.wheels.length >= 20) { toast('最多 20 个转盘', true); return; }
+  let n = app.wheels.length + 1;
+  let name = '转盘 ' + n;
+  while (app.wheels.some(function (w) { return w.name === name; })) { n++; name = '转盘 ' + n; }
+  const r = validateTab({
+    id: genId('tab'),
+    name: name,
+    items: [
+      { name: '选项 1', weight: 1 },
+      { name: '选项 2', weight: 1 },
+    ],
+    themeId: BUILTIN_THEMES[1].id,
+    removeWinner: false,
+  });
+  if (!r.ok) { toast(r.error, true); return; }
+  app = Object.freeze({
+    wheels: app.wheels.concat([r.value]),
+    activeId: r.value.id,
+    customThemes: app.customThemes,
+  });
+  saveApp(app);
+  renderAll();
+  toast('已新建「' + r.value.name + '」，双击标签可重命名');
+}
+
+/** @type {(id: string, newName: string) => void} */
+function renameWheel(id, newName) {
+  const nameR = validateTabName(newName);
+  if (!nameR.ok) { toast(nameR.error, true); return; }
+  app = Object.freeze({
+    wheels: Object.freeze(app.wheels.map(function (w) {
+      return w.id === id ? Object.freeze({ id: w.id, name: nameR.value, items: w.items, themeId: w.themeId, removeWinner: w.removeWinner }) : w;
+    })),
+    activeId: app.activeId,
+    customThemes: app.customThemes,
+  });
+  saveApp(app);
+  renderAll();
+  toast('已重命名为「' + nameR.value + '」');
+}
+
+/** @type {(id: string) => void} */
+function deleteWheel(id) {
+  if (spinning) { toast('正在转，等停了再删', true); return; }
+  if (app.wheels.length <= 1) { toast('至少保留 1 个转盘', true); return; }
+  const target = app.wheels.find(function (w) { return w.id === id; });
+  if (!target) return;
+  if (!window.confirm('确定删除转盘「' + target.name + '」？里面的选项会一起删掉，无法恢复。')) return;
+  const wheels = app.wheels.filter(function (w) { return w.id !== id; });
+  const activeId = app.activeId === id ? wheels[0].id : app.activeId;
+  angleByTab.delete(id);
+  // 清空所有指向被删转盘的跳转链接（防悬空引用）
+  const cleaned = Object.freeze(wheels.map(function (w) {
+    if (!w.items.some(function (it) { return it.linkTabId === id; })) return w;
+    return Object.freeze(Object.assign({}, w, {
+      items: Object.freeze(w.items.map(function (it) {
+        return it.linkTabId === id
+          ? createItem(it.name, it.weight, it.id, undefined, it.img).value
+          : it;
+      })),
+    }));
+  }));
+  app = Object.freeze({ wheels: cleaned, activeId: activeId, customThemes: app.customThemes });
+  saveApp(app);
+  renderAll();
+  toast('已删除「' + target.name + '」');
+}
+
+/** @type {(id: string) => void} */
+function setTheme(id) {
+  const tab = currentTab();
+  const t = allThemes().find(function (x) { return x.id === id; });
+  if (!t) { toast('主题不存在', true); return; }
+  const newTab = Object.freeze({ id: tab.id, name: tab.name, items: tab.items, themeId: id, removeWinner: tab.removeWinner });
+  app = Object.freeze({
+    wheels: Object.freeze(app.wheels.map(function (w) { return w.id === tab.id ? newTab : w; })),
+    activeId: app.activeId,
+    customThemes: app.customThemes,
+  });
+  saveApp(app);
+  // 整页换肤必须走 renderAll（内部会调用 applyAccent 更新 CSS 变量）
+  renderAll();
+}
+
+/** @type {(id: string) => void} */
+function deleteTheme(id) {
+  const target = app.customThemes.find(function (x) { return x.id === id; });
+  if (!target) return;
+  let next = Object.freeze({
+    wheels: app.wheels,
+    activeId: app.activeId,
+    customThemes: Object.freeze(app.customThemes.filter(function (x) { return x.id !== id; })),
+  });
+  // 用了该主题的转盘回退到默认主题
+  const fallback = BUILTIN_THEMES[1].id;
+  next = Object.freeze({
+    wheels: Object.freeze(next.wheels.map(function (w) {
+      if (w.themeId !== id) return w;
+      return Object.freeze({ id: w.id, name: w.name, items: w.items, themeId: fallback, removeWinner: w.removeWinner });
+    })),
+    activeId: next.activeId,
+    customThemes: next.customThemes,
+  });
+  app = next;
+  saveApp(app);
+  renderAll();
+  toast('已删除主题「' + target.name + '」');
+}
+
+/** @type {(name: string, colors: string[], gradientBase?: string) => void} */
+function addCustomTheme(name, colors, gradientBase) {
+  const r = createTheme(name, colors, undefined, gradientBase);
+  if (!r.ok) { toast(r.error, true); return; }
+  app = Object.freeze({
+    wheels: app.wheels,
+    activeId: app.activeId,
+    customThemes: app.customThemes.concat([r.value]),
+  });
+  saveApp(app);
+  setTheme(r.value.id);
+  toast('已创建主题「' + r.value.name + '」');
+}
+
+/** @type {(removeWinner: boolean) => void} */
+function setRemoveWinner(v) {
+  const tab = currentTab();
+  const newTab = Object.freeze({ id: tab.id, name: tab.name, items: tab.items, themeId: tab.themeId, removeWinner: v });
+  app = Object.freeze({
+    wheels: Object.freeze(app.wheels.map(function (w) { return w.id === tab.id ? newTab : w; })),
+    activeId: app.activeId,
+    customThemes: app.customThemes,
+  });
+  saveApp(app);
+}
+
+// ---- 转动逻辑 ----
+
+/** @type {() => WheelItem} */
+function pickWinner() {
+  const items = currentTab().items;
+  const total = totalWeight();
+  let roll = Math.random() * total;
+  for (let i = 0; i < items.length; i++) {
+    roll -= items[i].weight;
+    if (roll < 0) return items[i];
+  }
+  return items[items.length - 1];
+}
+
+function spin() {
+  if (spinning) return;
+  const tab = currentTab();
+  if (tab.items.length < 2) { toast('至少 2 个选项才能转', true); return; }
+  spinning = true;
+  document.getElementById('btn-spin').disabled = true;
+
+  const winner = pickWinner();
+  const n = tab.items.length;
+  const slice = TAU / n;
+  const winnerIndex = tab.items.indexOf(winner);
+  // 指针在正上方（-PI/2），让 winner 扇区中心对准指针，并加扇区内随机偏移
+  const targetCenter = -Math.PI / 2 - (winnerIndex * slice + slice / 2);
+  const jitter = (Math.random() - 0.5) * slice * 0.7;
+  const spins = 6 + Math.floor(Math.random() * 4);
+  const startAngle = (angleByTab.get(tab.id) ?? 0);
+  const targetAngle = startAngle + spins * TAU + (((targetCenter + jitter - startAngle) % TAU) + TAU) % TAU;
+
+  const duration = 4200 + Math.random() * 800;
+  const t0 = performance.now();
+
+  function frame(now) {
+    const p = Math.min((now - t0) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 4); // 四次缓出
+    angleByTab.set(tab.id, startAngle + (targetAngle - startAngle) * ease);
+    drawWheel();
+    if (p < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      angleByTab.set(tab.id, targetAngle % TAU);
+      spinning = false;
+      document.getElementById('btn-spin').disabled = false;
+      showResult(winner);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+/** @type {(winner: WheelItem) => void} */
+function showResult(winner) {
+  resultText.textContent = winner.name;
+  resultModal.classList.add('show');
+  const removeBtn = document.getElementById('btn-remove-winner');
+  removeBtn.style.display = currentTab().removeWinner ? 'none' : '';
+  removeBtn.onclick = function () {
+    resultModal.classList.remove('show');
+    removeItem(winner.id);
+    toast('已移除「' + winner.name + '」');
+  };
+  // 递进跳转：目标可以是其他转盘，也可以是工具页（硬币/骰子/数字，与转盘平级）
+  const jumpBtn = document.getElementById('btn-jump');
+  if (winner.linkTabId && winner.linkTabId.startsWith('tool:')) {
+    const toolNames = { 'tool:coin': '🪙 去抛硬币', 'tool:dice': '🎲 去丢骰子', 'tool:number': '🔢 去随机数字' };
+    const page = winner.linkTabId.slice(5);
+    jumpBtn.textContent = toolNames[winner.linkTabId] || '去工具 →';
+    jumpBtn.style.display = '';
+    jumpBtn.onclick = function () {
+      resultModal.classList.remove('show');
+      switchPage(/** @type {'coin' | 'dice' | 'number'} */ (page));
+      toast('已切换到工具页');
+    };
+  } else {
+    const targetWheel = winner.linkTabId
+      ? app.wheels.find(function (w) { return w.id === winner.linkTabId; })
+      : null;
+    if (targetWheel) {
+      jumpBtn.textContent = '进入「' + targetWheel.name + '」→';
+      jumpBtn.style.display = '';
+      jumpBtn.onclick = function () {
+        resultModal.classList.remove('show');
+        switchWheel(targetWheel.id);
+        toast('已切换到「' + targetWheel.name + '」，接着转！');
+      };
+    } else {
+      jumpBtn.style.display = 'none';
+    }
+  }
+}
+
+// ---- 事件绑定 ----
+
+document.getElementById('btn-add').addEventListener('click', function () {
+  const nameInput = /** @type {HTMLInputElement} */ (document.getElementById('item-name'));
+  const weightInput = /** @type {HTMLInputElement} */ (document.getElementById('item-weight'));
+  addItem(nameInput.value, weightInput.value);
+  nameInput.value = '';
+  weightInput.value = '';
+  nameInput.focus();
+});
+document.getElementById('item-name').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') document.getElementById('btn-add').click();
+});
+
+canvas.addEventListener('click', spin);
+document.getElementById('btn-spin').addEventListener('click', spin);
+
+themeSelect.addEventListener('change', function () { setTheme(themeSelect.value); });
+
+document.getElementById('remove-winner').addEventListener('change', function (e) {
+  setRemoveWinner(/** @type {HTMLInputElement} */ (e.target).checked);
+});
+
+// 自定义主题：配色模式（多色 / 单色渐变）与颜色草稿
+const themeModeSelect = document.getElementById('theme-mode');
+/** @type {string[]} */
+const draftColors = ['#3b82f6', '#60a5fa', '#93c5fd'];
+
+/** @type {(hex: string) => [number, number, number]} hex -> [h(0-360), s(0-100), l(0-100)] */
+function hexToHsl(hex) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  let h = 0, s = 0;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0));
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+  }
+  return [h, s * 100, l * 100];
+}
+
+/** @type {(h: number, s: number, l: number) => string} */
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100;
+  const k = (n) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  const to255 = (x) => Math.round(255 * x).toString(16).padStart(2, '0');
+  return '#' + to255(f(0)) + to255(f(8)) + to255(f(4));
+}
+
+/**
+ * 强调色加深版（用于转针、深色点缀），亮度乘 0.72
+ * @param {string} hex
+ * @returns {string}
+ */
+function accentDarker(hex) {
+  const [h, s, l] = hexToHsl(hex);
+  return hslToHex(h, s, Math.max(8, l * 0.72));
+}
+
+/**
+ * 整页换肤：把当前主题的强调色写入 CSS 变量 + 浏览器状态栏颜色
+ * @param {WheelTheme} theme
+ */
+function applyAccent(theme) {
+  const accent = theme.accent || '#2563eb';
+  const root = document.documentElement.style;
+  root.setProperty('--accent', accent);
+  root.setProperty('--accent-2', accentDarker(accent));
+  const meta = /** @type {HTMLMetaElement} */ (document.querySelector('meta[name="theme-color"]'));
+  if (meta) meta.content = accent;
+}
+
+/**
+ * 单色渐变：从一个基色生成 n 档深浅（亮→暗），保证相邻可区分
+ * @param {string} baseHex
+ * @param {number} n
+ * @returns {string[]}
+ */
+function makeShades(baseHex, n) {
+  const [h, s] = hexToHsl(baseHex);
+  const sat = Math.min(85, Math.max(45, s));
+  const shades = [];
+  const lTop = 72, lBottom = 30;
+  for (let i = 0; i < n; i++) {
+    const l = lTop - (lTop - lBottom) * (i / (n - 1));
+    shades.push(hslToHex(h, sat, l));
+  }
+  return shades;
+}
+
+function renderDraftColors() {
+  const box = document.getElementById('draft-colors');
+  box.innerHTML = '';
+  const isGradient = themeModeSelect.value === 'gradient';
+  const visible = isGradient ? draftColors.slice(0, 1) : draftColors;
+  document.getElementById('btn-add-color').style.display = isGradient ? 'none' : '';
+  document.getElementById('btn-remove-color').style.display = isGradient ? 'none' : '';
+  visible.forEach(function (c, i) {
+    const input = document.createElement('input');
+    input.type = 'color';
+    input.value = c;
+    input.addEventListener('input', function () { draftColors[i] = input.value; });
+    box.appendChild(input);
+  });
+}
+themeModeSelect.addEventListener('change', renderDraftColors);
+document.getElementById('btn-add-color').addEventListener('click', function () {
+  if (draftColors.length >= 12) { toast('颜色最多 12 种', true); return; }
+  draftColors.push('#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0'));
+  renderDraftColors();
+});
+document.getElementById('btn-remove-color').addEventListener('click', function () {
+  if (draftColors.length <= 2) { toast('至少保留 2 种颜色', true); return; }
+  draftColors.pop();
+  renderDraftColors();
+});
+document.getElementById('btn-create-theme').addEventListener('click', function () {
+  const nameInput = /** @type {HTMLInputElement} */ (document.getElementById('theme-name'));
+  if (themeModeSelect.value === 'gradient') {
+    const base = draftColors[0];
+    addCustomTheme(nameInput.value, makeShades(base, 12), base);
+  } else {
+    addCustomTheme(nameInput.value, draftColors.slice());
+  }
+  nameInput.value = '';
+});
+document.getElementById('btn-close-modal').addEventListener('click', function () { resultModal.classList.remove('show'); });
+document.getElementById('btn-again').addEventListener('click', function () {
+  resultModal.classList.remove('show');
+  setTimeout(spin, 150);
+});
+
+// 设置抽屉：底部导航「设置」呼出，遮罩 / 收起按钮关闭
+const panel = document.getElementById('panel');
+const backdrop = document.getElementById('panel-backdrop');
+function openDrawer() {
+  panel.classList.add('open');
+  backdrop.classList.add('show');
+}
+function closeDrawer() {
+  panel.classList.remove('open');
+  backdrop.classList.remove('show');
+}
+document.getElementById('btn-close-panel').addEventListener('click', closeDrawer);
+backdrop.addEventListener('click', closeDrawer);
+
+// ---- 底部导航：页面切换 ----
+
+/** @type {(name: 'wheel' | 'coin' | 'dice' | 'number' | 'help' | 'panel') => void} */
+function switchPage(name) {
+  if (name === 'panel') { openDrawer(); return; }
+  ['wheel', 'coin', 'dice', 'number', 'help'].forEach(function (p) {
+    document.getElementById('page-' + p).classList.toggle('active', p === name);
+  });
+  document.querySelectorAll('#bottom-nav .nav-btn').forEach(function (b) {
+    if (b.dataset.page === 'panel') { b.classList.remove('active'); return; }
+    b.classList.toggle('active', b.dataset.page === name);
+  });
+}
+document.querySelectorAll('#bottom-nav .nav-btn').forEach(function (b) {
+  b.addEventListener('click', function () { switchPage(/** @type {string} */ (b.dataset.page)); });
+});
+
+// ---- 抛硬币 ----
+
+let coinBusy = false;
+document.getElementById('btn-flip').addEventListener('click', function () {
+  if (coinBusy) return;
+  coinBusy = true;
+  const coin = document.getElementById('coin');
+  const resultEl = document.getElementById('coin-result');
+  resultEl.textContent = '';
+  coin.classList.remove('flipping');
+  // 强制重启动画
+  void coin.offsetWidth;
+  coin.classList.add('flipping');
+  const flipTimer = setInterval(function () {
+    renderCoinFace(Math.random() < 0.5 ? '正' : '反');
+  }, 120);
+  setTimeout(function () {
+    clearInterval(flipTimer);
+    const face = Math.random() < 0.5 ? '正' : '反';
+    renderCoinFace(face);
+    resultEl.textContent = face === '正' ? '正面朝上！' : '反面朝上！';
+    coin.classList.remove('flipping');
+    coinBusy = false;
+  }, 880);
+});
+
+// ---- 丢骰子 ----
+
+const DIE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+let diceBusy = false;
+
+document.getElementById('btn-roll').addEventListener('click', function () {
+  if (diceBusy) return;
+  diceBusy = true;
+  const count = Math.max(1, Math.min(6, parseInt(/** @type {HTMLSelectElement} */ (document.getElementById('dice-count')).value, 10) || 1));
+  const facesEl = document.getElementById('dice-faces');
+  const resultEl = document.getElementById('dice-result');
+  resultEl.textContent = '';
+
+  // 重建骰子节点并进入摇晃动画
+  facesEl.innerHTML = '';
+  const dies = [];
+  for (let i = 0; i < count; i++) {
+    const d = document.createElement('span');
+    d.className = 'die rolling';
+    d.textContent = DIE_FACES[Math.floor(Math.random() * 6)];
+    facesEl.appendChild(d);
+    dies.push(d);
+  }
+  const rollTimer = setInterval(function () {
+    dies.forEach(function (d) { d.textContent = DIE_FACES[Math.floor(Math.random() * 6)]; });
+  }, 110);
+  setTimeout(function () {
+    clearInterval(rollTimer);
+    let sum = 0;
+    dies.forEach(function (d) {
+      const v = 1 + Math.floor(Math.random() * 6);
+      d.textContent = DIE_FACES[v - 1];
+      d.classList.remove('rolling');
+      sum += v;
+    });
+    resultEl.textContent = count > 1 ? '总和：' + sum : '';
+    diceBusy = false;
+  }, 850);
+});
+
+// ---- 随机数字 ----
+
+/**
+ * 校验随机数字的范围（整数，含两端）
+ * @param {unknown} minRaw
+ * @param {unknown} maxRaw
+ * @returns {Result<[number, number]>}
+ */
+function validateRange(minRaw, maxRaw) {
+  let min, max;
+  if (typeof minRaw === 'string') {
+    if (minRaw.trim() === '') return Err('请输入最小值');
+    min = Number(minRaw.trim());
+  } else {
+    min = minRaw;
+  }
+  if (typeof maxRaw === 'string') {
+    if (maxRaw.trim() === '') return Err('请输入最大值');
+    max = Number(maxRaw.trim());
+  } else {
+    max = maxRaw;
+  }
+  if (!Number.isInteger(min) || !Number.isInteger(max)) return Err('范围必须是整数');
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return Err('范围数值无效');
+  if (Math.abs(min) > 1e12 || Math.abs(max) > 1e12) return Err('数值太大（上限 ±10^12）');
+  if (min > max) return Err('最小值不能大于最大值');
+  if (max - min > 1e9) return Err('范围跨度太大（上限 10^9）');
+  return Ok([min, max]);
+}
+
+/**
+ * 校验生成个数（1~100 的整数）
+ * @param {unknown} raw
+ * @returns {Result<number>}
+ */
+function validateCount(raw) {
+  const n = typeof raw === 'number' ? raw : Number(String(raw).trim());
+  if (!Number.isInteger(n) || n < 1 || n > 100) return Err('个数必须是 1~100 的整数');
+  return Ok(n);
+}
+
+document.getElementById('btn-rand').addEventListener('click', function () {
+  const minInput = /** @type {HTMLInputElement} */ (document.getElementById('num-min'));
+  const maxInput = /** @type {HTMLInputElement} */ (document.getElementById('num-max'));
+  const countInput = /** @type {HTMLInputElement} */ (document.getElementById('num-count'));
+  const repeatBox = /** @type {HTMLInputElement} */ (document.getElementById('num-repeat'));
+  const r = validateRange(minInput.value.trim(), maxInput.value.trim());
+  if (!r.ok) { toast(r.error, true); return; }
+  const c = validateCount(countInput.value.trim());
+  if (!c.ok) { toast(c.error, true); return; }
+  const min = r.value[0], max = r.value[1];
+  const span = max - min + 1;
+  const count = c.value;
+  const repeat = repeatBox.checked;
+  if (!repeat && count > span) {
+    toast('不重复模式下，个数（' + count + '）不能超过范围内的数字总数（' + span + '）', true);
+    return;
+  }
+
+  /** @type {number[]} */
+  let results;
+  if (repeat) {
+    results = [];
+    for (let i = 0; i < count; i++) results.push(min + Math.floor(Math.random() * span));
+  } else if (count === span) {
+    // 不重复且全取：直接洗牌整个范围（此时 span ≤ 100，无内存压力）
+    results = [];
+    for (let i = min; i <= max; i++) results.push(i);
+    for (let i = results.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = results[i];
+      results[i] = results[j];
+      results[j] = tmp;
+    }
+  } else {
+    // 不重复抽样：Set 去重拒绝采样
+    const picked = new Set();
+    while (picked.size < count) picked.add(min + Math.floor(Math.random() * span));
+    results = Array.from(picked);
+  }
+  document.getElementById('num-result').textContent = results.join('，');
+});
+
+// ---- 图片导入（相册/文件 → 裁剪编辑器 → 压缩为 dataURL） ----
+
+/** @type {{ img: HTMLImageElement, rot: number, fh: boolean, fv: boolean, zoom: number, ox: number, oy: number } | null} */
+let cropState = null;
+let cropTargetSize = 512;
+/** @type {((dataUrl: string) => void) | null} */
+let cropOnDone = null;
+
+const cropCanvas = /** @type {HTMLCanvasElement} */ (document.getElementById('crop-canvas'));
+const cropCtx = /** @type {CanvasRenderingContext2D} */ (cropCanvas.getContext('2d'));
+const cropModal = document.getElementById('crop-modal');
+const cropZoomSlider = /** @type {HTMLInputElement} */ (document.getElementById('crop-zoom'));
+
+/** 旋转后图片的有效宽高 */
+function cropEffDims() {
+  if (!cropState) return { w: 1, h: 1 };
+  const swap = cropState.rot === 90 || cropState.rot === 270;
+  return { w: swap ? cropState.img.height : cropState.img.width, h: swap ? cropState.img.width : cropState.img.height };
+}
+
+/** 计算当前缩放下允许的位移上限，并把位移钳制在范围内 */
+function clampCrop() {
+  if (!cropState) return;
+  const V = cropCanvas.width;
+  const { w: effW, h: effH } = cropEffDims();
+  const scale = Math.max(V / effW, V / effH) * cropState.zoom;
+  const maxX = Math.max(0, (scale * effW - V) / 2);
+  const maxY = Math.max(0, (scale * effH - V) / 2);
+  cropState.ox = Math.max(-maxX, Math.min(maxX, cropState.ox));
+  cropState.oy = Math.max(-maxY, Math.min(maxY, cropState.oy));
+}
+
+/** 把当前裁剪状态画到指定尺寸的画布上下文（显示与导出共用） */
+function drawCropInto(ctx, V) {
+  if (!cropState) return;
+  const s = cropState;
+  const { w: effW, h: effH } = cropEffDims();
+  const scale = Math.max(V / effW, V / effH) * s.zoom;
+  ctx.clearRect(0, 0, V, V);
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, V, V);
+  ctx.save();
+  ctx.translate(V / 2 + s.ox * (V / 320), V / 2 + s.oy * (V / 320));
+  ctx.rotate(s.rot * Math.PI / 180);
+  ctx.scale(s.fh ? -scale : scale, s.fv ? -scale : scale);
+  ctx.drawImage(s.img, -s.img.width / 2, -s.img.height / 2);
+  ctx.restore();
+  // 圆形参考框：对应硬币/盘面的实际显示形状
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, V, V);
+  ctx.arc(V / 2, V / 2, V * 0.42, 0, TAU, true);
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.fill('evenodd');
+  ctx.beginPath();
+  ctx.arc(V / 2, V / 2, V * 0.42, 0, TAU);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = Math.max(2, V / 80);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawCrop() {
+  drawCropInto(cropCtx, cropCanvas.width);
+}
+
+/** 打开裁剪编辑器：file → 编辑 → onDone(dataURL) */
+function openCropEditor(file, targetSize, onDone) {
+  if (!file || !file.type || !file.type.startsWith('image/')) {
+    toast('请选择图片文件', true);
+    return;
+  }
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = function () {
+    URL.revokeObjectURL(url);
+    cropState = { img: img, rot: 0, fh: false, fv: false, zoom: 1, ox: 0, oy: 0 };
+    cropTargetSize = targetSize;
+    cropOnDone = onDone;
+    cropZoomSlider.value = '1';
+    cropModal.classList.add('show');
+    drawCrop();
+  };
+  img.onerror = function () {
+    URL.revokeObjectURL(url);
+    toast('图片读取失败', true);
+  };
+  img.src = url;
+}
+
+function closeCropEditor() {
+  cropModal.classList.remove('show');
+  cropState = null;
+  cropOnDone = null;
+}
+
+document.getElementById('btn-crop-cancel').addEventListener('click', closeCropEditor);
+document.getElementById('btn-rot-left').addEventListener('click', function () {
+  if (!cropState) return;
+  cropState.rot = (cropState.rot + 270) % 360;
+  clampCrop();
+  drawCrop();
+});
+document.getElementById('btn-rot-right').addEventListener('click', function () {
+  if (!cropState) return;
+  cropState.rot = (cropState.rot + 90) % 360;
+  clampCrop();
+  drawCrop();
+});
+document.getElementById('btn-flip-h').addEventListener('click', function () {
+  if (!cropState) return;
+  cropState.fh = !cropState.fh;
+  drawCrop();
+});
+document.getElementById('btn-flip-v').addEventListener('click', function () {
+  if (!cropState) return;
+  cropState.fv = !cropState.fv;
+  drawCrop();
+});
+cropZoomSlider.addEventListener('input', function () {
+  if (!cropState) return;
+  cropState.zoom = parseFloat(cropZoomSlider.value);
+  clampCrop();
+  drawCrop();
+});
+document.getElementById('btn-crop-ok').addEventListener('click', function () {
+  if (!cropState || !cropOnDone) return;
+  const out = document.createElement('canvas');
+  out.width = cropTargetSize;
+  out.height = cropTargetSize;
+  /** @type {CanvasRenderingContext2D} */ (out.getContext('2d')).drawImage(cropCanvas, 0, 0, cropTargetSize, cropTargetSize);
+  const dataUrl = out.toDataURL('image/jpeg', 0.82);
+  const cb = cropOnDone;
+  closeCropEditor();
+  cb(dataUrl);
+});
+
+// 拖动平移 + 双指捏合缩放（Pointer Events 统一处理鼠标和触摸）
+const cropPointers = new Map();
+let cropPinchStartDist = 0;
+let cropPinchStartZoom = 1;
+
+cropCanvas.addEventListener('pointerdown', function (e) {
+  if (!cropState) return;
+  cropCanvas.setPointerCapture(e.pointerId);
+  cropPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (cropPointers.size === 2) {
+    const pts = Array.from(cropPointers.values());
+    cropPinchStartDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    cropPinchStartZoom = cropState.zoom;
+  }
+});
+cropCanvas.addEventListener('pointermove', function (e) {
+  if (!cropState || !cropPointers.has(e.pointerId)) return;
+  const prev = cropPointers.get(e.pointerId);
+  if (cropPointers.size === 1) {
+    // 单指/鼠标：按显示尺寸到画布坐标的比例平移
+    const rect = cropCanvas.getBoundingClientRect();
+    const ratio = cropCanvas.width / rect.width;
+    cropState.ox += (e.clientX - prev.x) * ratio;
+    cropState.oy += (e.clientY - prev.y) * ratio;
+    clampCrop();
+    drawCrop();
+  }
+  cropPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (cropPointers.size === 2) {
+    const pts = Array.from(cropPointers.values());
+    const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    if (cropPinchStartDist > 0) {
+      cropState.zoom = Math.max(1, Math.min(4, cropPinchStartZoom * (dist / cropPinchStartDist)));
+      cropZoomSlider.value = String(cropState.zoom);
+      clampCrop();
+      drawCrop();
+    }
+  }
+});
+function cropPointerEnd(e) {
+  cropPointers.delete(e.pointerId);
+  cropPinchStartDist = 0;
+}
+cropCanvas.addEventListener('pointerup', cropPointerEnd);
+cropCanvas.addEventListener('pointercancel', cropPointerEnd);
+
+// ---- 扇形贴图（每个选项一张，经裁剪编辑器） ----
+
+let pendingItemImgId = null;
+
+/** @type {(id: string, dataUrl: string | null) => void} */
+function setItemImg(id, dataUrl) {
+  const tab = currentTab();
+  const target = tab.items.find(function (it) { return it.id === id; });
+  if (!target) return;
+  // 显式重建字段，绝不继承旧值（避免"清除无效"类 bug）
+  const r = createItem(target.name, target.weight, target.id, target.linkTabId, dataUrl || undefined);
+  if (!r.ok) { toast(r.error, true); return; }
+  app = appWithItems(tab.items.map(function (it) { return it.id === id ? r.value : it; }));
+  saveApp(app);
+  renderAll();
+  toast(dataUrl ? '扇形贴图已设置' : '已清除扇形贴图');
+}
+
+document.getElementById('item-img-file').addEventListener('change', function (e) {
+  const input = /** @type {HTMLInputElement} */ (e.target);
+  const file = input.files && input.files[0];
+  if (!file || !pendingItemImgId) return;
+  const itemId = pendingItemImgId;
+  openCropEditor(file, 320, function (dataUrl) { setItemImg(itemId, dataUrl); });
+  input.value = '';
+});
+
+// ---- 扇形贴图（每个选项一张，经裁剪编辑器） ----
+
+// ---- 硬币自定义正反面（工具级偏好，独立存储） ----
+
+const PREFS_KEY = 'wheel_tool_prefs_v1';
+/** @type {{ coinFront?: string, coinBack?: string }} */
+let toolPrefs = loadToolPrefs();
+
+/** @type {(s: unknown) => boolean} */
+function isFaceDataUrl(s) {
+  return typeof s === 'string'
+    && /^data:image\/(jpeg|png);base64,/.test(s)
+    && s.length <= 120000;
+}
+
+function loadToolPrefs() {
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    if (!raw) return {};
+    const p = JSON.parse(raw) || {};
+    return {
+      coinFront: isFaceDataUrl(p.coinFront) ? p.coinFront : undefined,
+      coinBack: isFaceDataUrl(p.coinBack) ? p.coinBack : undefined,
+    };
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveToolPrefs() {
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify(toolPrefs));
+  } catch (e) {
+    toast('保存失败：本地存储空间不足', true);
+  }
+}
+
+/**
+ * 程序化绘制默认硬币贴图（仿人民币一元：银色金属盘）
+ * @param {boolean} front true=正面（1元），false=背面（菊花）
+ * @returns {string} PNG dataURL
+ */
+function makeDefaultCoinFace(front) {
+  const S = 256;
+  const c = document.createElement('canvas');
+  c.width = S;
+  c.height = S;
+  const g = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d'));
+  const cx = S / 2, cy = S / 2, R = S / 2;
+  // 银色金属底
+  const grad = g.createRadialGradient(S * 0.35, S * 0.3, S * 0.05, cx, cy, R);
+  grad.addColorStop(0, '#f8fafc');
+  grad.addColorStop(0.5, '#cbd5e1');
+  grad.addColorStop(0.85, '#94a3b8');
+  grad.addColorStop(1, '#64748b');
+  g.beginPath();
+  g.arc(cx, cy, R - 4, 0, TAU);
+  g.fillStyle = grad;
+  g.fill();
+  g.lineWidth = 6;
+  g.strokeStyle = '#475569';
+  g.stroke();
+  // 内环
+  g.beginPath();
+  g.arc(cx, cy, R * 0.78, 0, TAU);
+  g.lineWidth = 3;
+  g.strokeStyle = 'rgba(71, 85, 105, .5)';
+  g.stroke();
+
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  if (front) {
+    g.fillStyle = '#334155';
+    g.font = 'bold 118px Georgia, "Times New Roman", serif';
+    g.fillText('1', cx - 30, cy + 8);
+    g.font = 'bold 56px "Microsoft YaHei", sans-serif';
+    g.fillText('元', cx + 52, cy + 10);
+    g.font = '17px Georgia, serif';
+    g.fillStyle = 'rgba(51, 65, 85, .7)';
+    g.fillText('YI YUAN', cx, cy + 76);
+  } else {
+    // 菊花：16 片花瓣绕中心
+    g.save();
+    g.translate(cx, cy);
+    for (let i = 0; i < 16; i++) {
+      g.save();
+      g.rotate(i * Math.PI / 8);
+      g.beginPath();
+      g.ellipse(0, -R * 0.44, R * 0.085, R * 0.3, 0, 0, TAU);
+      g.fillStyle = 'rgba(71, 85, 105, .5)';
+      g.fill();
+      g.strokeStyle = 'rgba(248, 250, 252, .55)';
+      g.lineWidth = 2;
+      g.stroke();
+      g.restore();
+    }
+    g.beginPath();
+    g.arc(0, 0, R * 0.15, 0, TAU);
+    g.fillStyle = 'rgba(100, 116, 139, .75)';
+    g.fill();
+    g.restore();
+  }
+  return c.toDataURL('image/png');
+}
+
+const DEFAULT_COIN_FRONT = makeDefaultCoinFace(true);
+const DEFAULT_COIN_BACK = makeDefaultCoinFace(false);
+
+/** 渲染硬币当前面：自定义图优先，否则用内置的一元硬币贴图 */
+function renderCoinFace(face) {
+  const el = document.getElementById('coin');
+  let tex = DEFAULT_COIN_FRONT;
+  if (face === '正') tex = toolPrefs.coinFront || DEFAULT_COIN_FRONT;
+  else if (face === '反') tex = toolPrefs.coinBack || DEFAULT_COIN_BACK;
+  el.style.backgroundImage = 'url("' + tex + '")';
+  el.style.backgroundSize = 'cover';
+  el.style.backgroundPosition = 'center';
+  el.style.backgroundRepeat = 'no-repeat';
+}
+renderCoinFace(null);
+
+let coinFaceTarget = null;
+document.getElementById('btn-coin-front').addEventListener('click', function () {
+  coinFaceTarget = 'coinFront';
+  /** @type {HTMLInputElement} */ (document.getElementById('coin-face-file')).click();
+});
+document.getElementById('btn-coin-back').addEventListener('click', function () {
+  coinFaceTarget = 'coinBack';
+  /** @type {HTMLInputElement} */ (document.getElementById('coin-face-file')).click();
+});
+document.getElementById('btn-coin-reset').addEventListener('click', function () {
+  toolPrefs = {};
+  saveToolPrefs();
+  renderCoinFace(null);
+  toast('已恢复默认硬币');
+});
+document.getElementById('coin-face-file').addEventListener('change', function (e) {
+  const input = /** @type {HTMLInputElement} */ (e.target);
+  const file = input.files && input.files[0];
+  if (!file || !coinFaceTarget) return;
+  const target = coinFaceTarget;
+  openCropEditor(file, 256, function (dataUrl) {
+    toolPrefs[target] = dataUrl;
+    saveToolPrefs();
+    renderCoinFace(target === 'coinFront' ? '正' : '反');
+    toast('硬币' + (target === 'coinFront' ? '正面' : '反面') + '图片已设置');
+  });
+  input.value = '';
+});
+
+// ---- 分享转盘（纯离线分享码，v2：整组跳转链一起分享） ----
+
+const SHARE_PREFIX = 'WHEEL1.';
+
+/**
+ * 从 startId 出发，沿 linkTabId 收集整个"跳转链集群"
+ * @param {string} startId
+ * @returns {WheelTab[]}
+ */
+function collectCluster(startId) {
+  const seen = new Set();
+  const order = [];
+  const queue = [startId];
+  while (queue.length) {
+    const id = queue.shift();
+    if (seen.has(id)) continue;
+    const w = app.wheels.find(function (x) { return x.id === id; });
+    if (!w) continue;
+    seen.add(id);
+    order.push(w);
+    w.items.forEach(function (it) {
+      if (it.linkTabId && !it.linkTabId.startsWith('tool:') && !seen.has(it.linkTabId)) {
+        queue.push(it.linkTabId);
+      }
+    });
+  }
+  return order;
+}
+
+/**
+ * 打包分享码：v2 格式，包含跳转链上全部转盘；跳转关系用组内序号表示，导入时重映射
+ * @returns {{ code: string, names: string[] }}
+ */
+function buildShareCode() {
+  const cluster = collectCluster(currentTab().id);
+  const idxById = new Map(cluster.map(function (w, i) { return [w.id, i]; }));
+  /** @type {Record<string, { n: string, c: string[], g?: string }>} */
+  const themes = {};
+  const wheels = cluster.map(function (w) {
+    const theme = getTheme(w.themeId);
+    if (!theme.builtin && !themes[w.themeId]) {
+      themes[w.themeId] = { n: theme.name, c: theme.colors.slice(), g: theme.gradientBase };
+    }
+    return {
+      n: w.name,
+      t: w.themeId,
+      r: w.removeWinner ? 1 : 0,
+      i: w.items.map(function (it) {
+        // 组内序号（跳转其他转盘）/ 工具链接原样保留（'tool:*'）/ -1 无跳转
+        let linkMark = -1;
+        if (it.linkTabId && it.linkTabId.startsWith('tool:')) linkMark = it.linkTabId;
+        else if (it.linkTabId && idxById.has(it.linkTabId)) linkMark = idxById.get(it.linkTabId);
+        return [it.name, it.weight, linkMark];
+      }),
+    };
+  });
+  const payload = { v: 2, w: wheels };
+  if (Object.keys(themes).length) payload.th = themes;
+  const bytes = new TextEncoder().encode(JSON.stringify(payload));
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return {
+    code: SHARE_PREFIX + btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''),
+    names: cluster.map(function (w) { return w.name; }),
+  };
+}
+
+/**
+ * 解析分享码（兼容 v1 单转盘旧码，统一转成 v2 组结构）
+ * @param {string} raw
+ * @returns {Result<{ w: Array<{ n: string, t: string, r: number, i: Array<[string, number, number]> }>, th: Record<string, { n: string, c: string[], g?: string }> }>}
+ */
+function parseShareCode(raw) {
+  try {
+    const code = String(raw).replace(/\s+/g, '');
+    if (!code.startsWith(SHARE_PREFIX)) return Err('不是有效的分享码（应以 WHEEL1. 开头）');
+    let b64 = code.slice(SHARE_PREFIX.length).replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    if (b64.length > 12000) return Err('分享码过长');
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const p = JSON.parse(new TextDecoder().decode(bytes));
+    if (!p || (p.v !== 1 && p.v !== 2)) return Err('分享码版本不支持');
+
+    if (p.v === 1) {
+      // v1 单转盘旧码 → 转成单元素组
+      if (typeof p.n !== 'string' || typeof p.tid !== 'string' || !Array.isArray(p.i)) {
+        return Err('分享码内容不完整');
+      }
+      const th = p.th && typeof p.th === 'object' ? { [p.tid]: p.th } : {};
+      return Ok({ w: [{ n: p.n, t: p.tid, r: p.r ? 1 : 0, i: p.i.map(function (pair) { return [pair[0], pair[1], -1]; }) }], th: th });
+    }
+    // v2：整组
+    if (!Array.isArray(p.w) || p.w.length < 1 || p.w.length > 20) return Err('分享码中的转盘数量无效');
+    for (const w of p.w) {
+      if (!w || typeof w.n !== 'string' || typeof w.t !== 'string' || !Array.isArray(w.i)) {
+        return Err('分享码内容不完整');
+      }
+    }
+    const th = (p.th && typeof p.th === 'object') ? p.th : {};
+    return Ok({ w: p.w, th: th });
+  } catch (e) {
+    return Err('分享码无法解析，请确认完整复制');
+  }
+}
+
+document.getElementById('btn-gen-code').addEventListener('click', function () {
+  const box = /** @type {HTMLTextAreaElement} */ (document.getElementById('share-code'));
+  const tools = document.getElementById('share-tools');
+  const info = document.getElementById('share-info');
+  const result = buildShareCode();
+  box.value = result.code;
+  box.style.display = '';
+  tools.style.display = '';
+  info.style.display = '';
+  info.textContent = result.names.length === 1
+    ? '本分享码包含 1 个转盘：「' + result.names[0] + '」'
+    : '本分享码包含 ' + result.names.length + ' 个转盘（跳转链成组）：' + result.names.map(function (n) { return '「' + n + '」'; }).join(' → ');
+  box.focus();
+  box.select();
+  toast('分享码已生成，复制发给对方即可');
+});
+
+document.getElementById('btn-copy-code').addEventListener('click', function () {
+  const box = /** @type {HTMLTextAreaElement} */ (document.getElementById('share-code'));
+  box.select();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(box.value).then(function () { toast('已复制到剪贴板'); }, function () {
+      if (document.execCommand('copy')) toast('已复制到剪贴板');
+      else toast('复制失败，请长按手动复制', true);
+    });
+  } else if (document.execCommand('copy')) {
+    toast('已复制到剪贴板');
+  } else {
+    toast('复制失败，请长按手动复制', true);
+  }
+});
+
+document.getElementById('btn-import').addEventListener('click', function () {
+  const box = /** @type {HTMLTextAreaElement} */ (document.getElementById('import-code'));
+  const r = parseShareCode(box.value);
+  if (!r.ok) { toast(r.error, true); return; }
+  if (spinning) { toast('正在转，等停了再导入', true); return; }
+  if (app.wheels.length + r.value.w.length > 20) { toast('导入后超过 20 个转盘上限', true); return; }
+  const p = r.value;
+
+  // 1) 自带的自定义主题：按旧主题 id 去重注册，映射到新实例
+  /** @type {Record<string, string>} */
+  const themeMap = {};
+  /** @type {WheelTheme[]} */
+  const newThemes = [];
+  for (const oldId of Object.keys(p.th)) {
+    const th = p.th[oldId];
+    const tr = createTheme(th.n, th.c, undefined, th.g);
+    if (!tr.ok) { toast('分享码里的主题无效：' + tr.error, true); return; }
+    themeMap[oldId] = tr.value.id;
+    newThemes.push(tr.value);
+  }
+
+  // 2) 预生成新转盘 id，跳转链接重映射到新 id（整组内互跳不断链）
+  const idMap = p.w.map(function () { return genId('tab'); });
+  /** @type {WheelTab[]} */
+  const tabs = [];
+  for (let i = 0; i < p.w.length; i++) {
+    const w = p.w[i];
+    const themeId = themeMap[w.t] || (BUILTIN_THEMES.some(function (t) { return t.id === w.t; }) ? w.t : BUILTIN_THEMES[1].id);
+    const tr = validateTab({
+      id: idMap[i],
+      name: w.n,
+      themeId: themeId,
+      removeWinner: !!w.r,
+      items: w.i.map(function (pair) {
+        const linkMark = pair[2];
+        let linkTabId;
+        if (typeof linkMark === 'number' && linkMark >= 0 && linkMark < idMap.length) {
+          linkTabId = idMap[linkMark];
+        } else if (typeof linkMark === 'string' && linkMark.startsWith('tool:')) {
+          linkTabId = linkMark; // 工具链接原样保留
+        }
+        return {
+          name: pair[0],
+          weight: pair[1],
+          linkTabId: linkTabId,
+        };
+      }),
+    });
+    if (!tr.ok) { toast('分享码里的转盘「' + w.n + '」无效：' + tr.error, true); return; }
+    tabs.push(tr.value);
+  }
+
+  app = Object.freeze({
+    wheels: app.wheels.concat(tabs),
+    activeId: tabs[0].id,
+    customThemes: app.customThemes.concat(newThemes),
+  });
+  saveApp(app);
+  renderAll();
+  box.value = '';
+  toast('已导入 ' + tabs.length + ' 个转盘：「' + tabs.map(function (t) { return t.name; }).join('」「') + '」');
+});
+
+// 初始化
+renderDraftColors();
+renderAll();
+
+// ---- PWA：注册 Service Worker（离线缓存） ----
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').catch(function (e) {
+      console.warn('[wheel] Service Worker 注册失败（离线缓存不可用）：', e);
+    });
+  });
+}
+
+// ---- PWA：网页内安装按钮 ----
+(function setupInstallBanner() {
+  const banner = document.getElementById('install-banner');
+  const hint = document.getElementById('install-hint');
+  const btn = document.getElementById('btn-install');
+  // 已经以独立 App 模式运行（装好了）就不再显示
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) return;
+
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  let deferredPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    hint.textContent = '把转盘装到手机桌面，像普通 App 一样点开就用，断网也能用。';
+    banner.classList.add('show');
+  });
+
+  btn.addEventListener('click', function () {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function () { deferredPrompt = null; banner.classList.remove('show'); });
+    }
+  });
+
+  if (isIOS) {
+    // iOS 没有 beforeinstallprompt，直接给文字指引
+    hint.innerHTML = 'iPhone 安装方法：用 <b>Safari</b> 打开本页 → 点底部中间的<b>分享按钮</b>（方框加箭头）→ 往下滑找到「<b>添加到主屏幕</b>」。<br>微信里打开的话请先点右上角 ··· → 在 Safari 中打开。';
+    banner.classList.add('show');
+  }
+})();
+</script>
+</body>
+</html>

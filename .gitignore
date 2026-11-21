@@ -1,0 +1,5 @@
+node_modules/
+.gh-user.json
+.gh-repo.json
+.tmp-*
+*.log
