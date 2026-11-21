@@ -1,11 +1,13 @@
 /**
  * 幸运转盘 · Service Worker（离线缓存）
- * 策略：Cache-first + 后台更新（stale-while-revalidate 简化版）
- * 首次访问后，所有资源缓存在手机本地，断网也能完整使用。
+ * 策略：
+ *   - 页面（导航请求）：网络优先，失败回退缓存 → 打开就是最新版，断网也能用
+ *   - 静态资源（图标等）：缓存优先 + 后台更新
+ * 首次访问后，所有资源缓存在本机，断网也能完整使用。
  */
 'use strict';
 
-const CACHE_NAME = 'wheel-cache-v14';
+const CACHE_NAME = 'wheel-cache-v17';
 const ASSETS = [
   './',
   './index.html',
@@ -33,21 +35,44 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 请求拦截：先取缓存，后台静默更新
+// 请求拦截
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  event.respondWith(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      const cached = await cache.match(event.request);
-      const fetchPromise = fetch(event.request)
-        .then((response) => {
-          if (response && response.ok && new URL(event.request.url).origin === self.location.origin) {
-            cache.put(event.request, response.clone());
-          }
-          return response;
-        })
-        .catch(() => cached);
-      return cached || fetchPromise;
-    })
-  );
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
+
+  const isDoc = event.request.mode === 'navigate'
+    || url.pathname.endsWith('/')
+    || url.pathname.endsWith('index.html');
+
+  if (isDoc) {
+    // 页面：网络优先 → 保证一打开就是最新版；断网时回退到缓存
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      try {
+        const fresh = await fetch(event.request);
+        if (fresh && fresh.ok) cache.put(event.request, fresh.clone());
+        return fresh;
+      } catch (e) {
+        return (await cache.match(event.request))
+          || (await cache.match('./index.html'))
+          || (await cache.match('./'))
+          || Response.error();
+      }
+    })());
+    return;
+  }
+
+  // 静态资源：缓存优先 + 后台静默更新
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(event.request);
+    const network = fetch(event.request)
+      .then((response) => {
+        if (response && response.ok) cache.put(event.request, response.clone());
+        return response;
+      })
+      .catch(() => cached);
+    return cached || network;
+  })());
 });
