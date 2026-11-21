@@ -7,7 +7,7 @@
  */
 'use strict';
 
-const CACHE_NAME = 'wheel-cache-v18';
+const CACHE_NAME = 'wheel-cache-v21';
 const ASSETS = [
   './',
   './index.html',
