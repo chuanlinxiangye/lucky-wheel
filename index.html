@@ -207,6 +207,61 @@
   .btn-move:hover { color: var(--accent); background: rgba(0, 0, 0, .05); }
   .btn-move[disabled] { opacity: .25; cursor: default; background: none; }
   .item-btns { display: flex; align-items: center; gap: 4px; }
+
+  /* ---- 每块扇形单独配色：按钮上的小色块 + 展开的调色盘 ---- */
+  .btn-color { position: relative; }
+  .btn-color::after {
+    content: '';
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    background: var(--swatch, transparent);
+    border: 1px solid rgba(0, 0, 0, .35);
+  }
+  .btn-color.is-custom { box-shadow: inset 0 0 0 2px var(--accent); }
+  .color-tray {
+    flex: 1 0 100%;
+    order: 9;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .color-tray .tray-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .color-tray .tray-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .color-tray .chip {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  .color-tray .chip.wide { width: 46px; }
+  .color-tray .chip.on { box-shadow: 0 0 0 2px var(--accent); border-color: transparent; }
+  .color-tray .chip.none {
+    background-image: repeating-linear-gradient(45deg, var(--border) 0 4px, transparent 4px 8px);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 32px;
+  }
+  .color-tray input[type="color"] {
+    width: 46px;
+    height: 34px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--panel-2);
+    cursor: pointer;
+  }
+  .color-tray .tray-note { font-size: 12px; color: var(--muted); line-height: 1.6; }
   #item-list select.inline-edit {
     flex: 1;
     width: auto;
@@ -730,6 +785,7 @@
 
   <section>
     <h2>盘面配色</h2>
+    <p class="muted" style="margin-bottom:10px">两套玩法叠在一起用：<b>这里改整盘基调</b>（主题里所有颜色），<b>「列表」页每个选项右侧的 🎨 改单独一块</b>（推荐色 / 渐变 / 自定义两色）。哪一块挑过色，就不再跟主题变。</p>
     <label>当前主题的颜色（点色块直接改）</label>
     <div id="theme-swatches" class="swatch-row"></div>
     <div class="share-tools" style="margin-top:8px">
@@ -925,6 +981,7 @@
         <li><b>两种贴图方式</b>（在设置抽屉里切换，全局生效）：<b>整块铺满</b>（默认）——图等比放大到把整块扇形填满、不留底色，超出扇形的部分裁掉，扇形看起来"本身就是这张图"；<b>整张留边</b>——图等比缩小到整张塞进扇形里，四周露出扇区底色。窄扇区（选项很多）时铺满模式只截取图片中间一条竖带，属于正常现象，想看到整张图就切到留边。</li>
         <li><b>主题换肤</b>：在「⚙️ 设置」抽屉里下拉切换 10 种配色，整页按钮、指针、中心点都会跟着变色。「新建主题」可选多色自选或单色渐变（选一个颜色自动生成深浅，选项越多渐变越顺滑）。</li>
         <li><b>盘面配色（直接改色）</b>：「⚙️ 设置 → 盘面配色」里会把当前主题的颜色列成一排色块，点哪个改哪个，改完立刻生效，不用起名字。改到内置主题时会自动复制成你自己的主题（名字后面加「改」），原主题不受影响。「＋ 加一色 / − 减一色」随意加减（2~12 种），「变单色渐变」会把整盘换成一个颜色的深浅渐变——之后只剩一个色块，改它整盘的深浅会一起重算。</li>
+        <li><b>单块扇形配色（每块自己挑）</b>：「列表」页每个选项右侧有个 🎨 按钮，右下角的小方块就是这一块现在用的颜色。点它展开调色盘——可以直接挑<b>推荐色</b>（12 个常用色），可以套<b>渐变预设</b>（蓝紫 / 落日 / 薄荷 / 金橙 / 玫紫 / 夜色，由盘心向外过渡），也可以自己选<b>主色 + 副色</b>做任意双色渐变（副色不选就是纯色）。点「跟随」退回跟主题一起变。挑过色的块不再受主题影响，两者可以混着用：整盘一个调子，某几块单独跳出来。</li>
         <li><b>盘面外观</b>：「⚙️ 设置 → 盘面外观」里可以换三样东西——<b>盘面字体</b>（雅黑 / 黑体 / 宋体 / 楷体 / 圆体 / 等宽，选中的那项下拉里会直接用该字体预览）、<b>文字颜色</b>（白字深描边、黑字白描边、跟随主题色、或自己挑一个颜色——浅色自动配黑描边、深色自动配白描边）、<b>指针样式</b>（细针小箭头 / 大箭头 / 圆点粗针 / 盘外顶部标记）。只影响扇形上的文字和指针，界面按钮不受影响，免得排版错乱。</li>
         <li><b>音效</b>：转动、抛硬币、摇骰子、切页面都有声音，详见下面「🔊 音效」一节。</li>
         <li><b>淘汰制</b>：勾选「转中后自动移除该选项」，适合多人轮流淘汰。</li>
@@ -1067,7 +1124,7 @@
 
 // ------------------------- 类型定义 -------------------------
 
-/** @typedef {{ readonly id: string, readonly name: string, readonly weight: number, readonly linkTabId?: string, readonly img?: string }} WheelItem 选项（linkTabId：跳转目标；img：该扇形的贴图） */
+/** @typedef {{ readonly id: string, readonly name: string, readonly weight: number, readonly linkTabId?: string, readonly img?: string, readonly color?: string }} WheelItem 选项（linkTabId：跳转目标；img：该扇形的贴图；color：#rrggbb 纯色 / #rrggbb,#rrggbb 双色渐变，省略=跟随主题） */
 
 /**
  * 主题（gradientBase 存在时为"单色渐变"主题：绘制时按选项数现场生成深浅；
@@ -1104,6 +1161,11 @@ const isStringInLength = (v, min, max) =>
 const isHexColor = (v) =>
   typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
 
+/** 单个扇形的颜色：'#rrggbb' 纯色，或 '#rrggbb,#rrggbb' 由内到外的双色渐变 */
+/** @type {(v: unknown) => boolean} */
+const isSliceColor = (v) =>
+  typeof v === 'string' && /^#[0-9a-fA-F]{6}(?:,#[0-9a-fA-F]{6})?$/.test(v);
+
 /** @type {(v: unknown) => boolean} */
 const isPositiveFinite = (v) =>
   typeof v === 'number' && Number.isFinite(v) && v > 0;
@@ -1120,12 +1182,19 @@ function genId(prefix) {
  * 校验并构造 WheelItem（不可变对象，唯一入口）
  * @param {unknown} name
  * @param {unknown} weight
- * @param {string} [fixedId] 重命名时保留原 id
- * @param {unknown} [linkTabId] 跳转目标转盘 id 或 tool:coin/dice/number
- * @param {unknown} [img] 该扇形的贴图 dataURL（自动压缩过）
+ * @param {{ id?: string, linkTabId?: unknown, img?: unknown, color?: unknown }} [opts]
+ *   id        重命名 / 改色 / 换图时保留原 id
+ *   linkTabId 跳转目标转盘 id 或 tool:coin/dice/number
+ *   img       该扇形的贴图 dataURL（自动压缩过）
+ *   color     该扇形自己的颜色：'#rrggbb' 纯色 / '#rrggbb,#rrggbb' 双色渐变 / 省略=跟随主题
  * @returns {Result<WheelItem>}
  */
-function createItem(name, weight, fixedId, linkTabId, img) {
+function createItem(name, weight, opts) {
+  const o = opts || {};
+  const fixedId = o.id;
+  const linkTabId = o.linkTabId;
+  const img = o.img;
+  const color = o.color;
   if (!isStringInLength(name, 1, 30)) {
     return Err(`选项名必须是 1~30 个字符（收到：${JSON.stringify(name ?? null)}）`);
   }
@@ -1147,10 +1216,14 @@ function createItem(name, weight, fixedId, linkTabId, img) {
       && (typeof img !== 'string' || !/^data:image\/(png|jpeg|jpg|webp);base64,/.test(img) || img.length > 120000)) {
     return Err('选项图片无效或过大');
   }
+  if (color !== undefined && color !== null && !isSliceColor(color)) {
+    return Err('扇形颜色格式不正确，需要 #RRGGBB 或 #RRGGBB,#RRGGBB');
+  }
   return Ok(Object.freeze(Object.assign(
     { id: fixedId || genId('item'), name: String(name).trim(), weight: w },
     typeof linkTabId === 'string' ? { linkTabId: linkTabId } : {},
-    typeof img === 'string' ? { img: img } : {}
+    typeof img === 'string' ? { img: img } : {},
+    typeof color === 'string' ? { color: color } : {}
   )));
 }
 
@@ -1206,7 +1279,12 @@ function validateTab(raw) {
   const items = [];
   for (const it of o.items) {
     const io = /** @type {Record<string, unknown>} */ (it);
-    const r = createItem(io && io.name, io && io.weight, typeof io.id === 'string' ? io.id : undefined, io && io.linkTabId, io && io.img);
+    const r = createItem(io && io.name, io && io.weight, {
+      id: typeof io.id === 'string' ? io.id : undefined,
+      linkTabId: io && io.linkTabId,
+      img: io && io.img,
+      color: io && io.color,
+    });
     if (!r.ok) return Err(`「${nameR.value}」${r.error}`);
     items.push(r.value);
   }
@@ -2284,8 +2362,20 @@ function drawWheel() {
     ctx.moveTo(cx, cy);
     ctx.arc(cx, cy, radius, a0, a1);
     ctx.closePath();
-    const color = sliceColors[i % sliceColors.length];
-    ctx.fillStyle = color;
+    // 这一块的底色：自己挑过色就用它（纯色 / 双色渐变），否则按主题轮着来
+    const own = it.color || '';
+    const parts = own ? own.split(',') : null;
+    if (parts && parts.length > 1) {
+      const mid = a0 + slice / 2;
+      const grad = ctx.createLinearGradient(
+        cx, cy, cx + Math.cos(mid) * radius, cy + Math.sin(mid) * radius
+      );
+      grad.addColorStop(0, parts[0]);
+      grad.addColorStop(1, parts[1]);
+      ctx.fillStyle = grad;
+    } else {
+      ctx.fillStyle = parts ? parts[0] : sliceColors[i % sliceColors.length];
+    }
     ctx.fill();
     ctx.strokeStyle = 'rgba(0,0,0,0.35)';
     ctx.lineWidth = 1.5;
@@ -2428,6 +2518,174 @@ function renderTabs() {
   tabsBar.appendChild(plus);
 }
 
+// ---- 每块扇形单独配色：推荐色、渐变预设、自定义两色 ----
+
+/** 推荐色：一排放得下、彼此区分度高的常用色 */
+const SLICE_PICKS = Object.freeze([
+  '#ef4444', '#f97316', '#f59e0b', '#eab308', '#22c55e', '#10b981',
+  '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#64748b',
+]);
+
+/** 渐变预设：a 靠盘心、b 靠外缘 */
+const SLICE_GRADS = Object.freeze([
+  { name: '蓝紫', a: '#3b82f6', b: '#8b5cf6' },
+  { name: '落日', a: '#f97316', b: '#ef4444' },
+  { name: '薄荷', a: '#10b981', b: '#22d3ee' },
+  { name: '金橙', a: '#f59e0b', b: '#fb7185' },
+  { name: '玫紫', a: '#ec4899', b: '#8b5cf6' },
+  { name: '夜色', a: '#475569', b: '#0f172a' },
+]);
+
+/** 哪个选项的调色盘是展开的（重绘后恢复用） */
+let openSliceColorId = null;
+
+/** 主题在这一块上原本会给的颜色（"跟随主题"时按钮上的预览色） */
+function sliceColorAt(theme, idx) {
+  const n = Math.max(2, currentTab().items.length);
+  const list = theme.gradientBase ? makeShades(theme.gradientBase, n) : theme.colors;
+  return list[idx % list.length];
+}
+
+/** 把按钮右下角的小色块同步成这一块的实际颜色 */
+function syncColorBtn(btn, it, idx) {
+  const base = it.color ? it.color.split(',')[0] : sliceColorAt(getTheme(currentTab().themeId), idx);
+  btn.style.setProperty('--swatch', base);
+  btn.classList.toggle('is-custom', !!it.color);
+}
+
+/**
+ * 改某一块的颜色。spec 省略 = 跟随主题；'#rrggbb' 纯色；'#rrggbb,#rrggbb' 渐变
+ * @type {(id: string, spec: string | undefined) => boolean}
+ */
+function setItemColor(id, spec) {
+  const tab = currentTab();
+  const target = tab.items.find(function (it) { return it.id === id; });
+  if (!target) return false;
+  const r = createItem(target.name, target.weight, {
+    id: target.id, linkTabId: target.linkTabId, img: target.img, color: spec || undefined,
+  });
+  if (!r.ok) { toast(r.error, true); return false; }
+  app = appWithItems(tab.items.map(function (it) { return it.id === id ? r.value : it; }));
+  saveApp(app);
+  drawWheel();
+  return true;
+}
+
+/**
+ * 造一块扇形的调色盘：跟随主题 / 推荐色 / 渐变预设 / 自定义两色
+ * @type {(it: WheelItem, colorBtn: HTMLButtonElement, idx: number) => HTMLElement}
+ */
+function buildColorTray(it, colorBtn, idx) {
+  const theme = getTheme(currentTab().themeId);
+  const cur = it.color || '';
+  const curA = cur ? cur.split(',')[0] : '';
+  const curB = cur.indexOf(',') >= 0 ? cur.split(',')[1] : '';
+
+  const tray = document.createElement('div');
+  tray.className = 'color-tray';
+
+  // 改色后只刷新这一片 DOM，不整表重绘（否则拖原生取色器会被打断）
+  function refresh() {
+    const now = currentTab().items.find(function (x) { return x.id === it.id; }) || it;
+    syncColorBtn(colorBtn, now, idx);
+    const fresh = buildColorTray(now, colorBtn, idx);
+    tray.replaceWith(fresh);
+  }
+
+  function line(labelText) {
+    const line = document.createElement('div');
+    line.className = 'tray-line';
+    if (labelText) {
+      const lb = document.createElement('span');
+      lb.className = 'tray-label';
+      lb.textContent = labelText;
+      line.appendChild(lb);
+    }
+    return line;
+  }
+
+  // 1) 跟随主题
+  const followLine = line('这一块：');
+  const follow = document.createElement('button');
+  follow.className = 'chip none' + (cur ? '' : ' on');
+  follow.textContent = cur ? '' : '跟随';
+  follow.title = '不加自定义颜色，跟主题一起变';
+  follow.style.width = 'auto';
+  follow.style.padding = '0 10px';
+  follow.addEventListener('click', function () {
+    if (!cur) return;
+    if (setItemColor(it.id, undefined)) refresh();
+  });
+  followLine.appendChild(follow);
+  tray.appendChild(followLine);
+
+  // 2) 推荐色（点一下就是纯色）
+  const pickLine = line('推荐色：');
+  SLICE_PICKS.forEach(function (hex) {
+    const b = document.createElement('button');
+    b.className = 'chip' + (cur === hex ? ' on' : '');
+    b.style.background = hex;
+    b.title = hex;
+    b.addEventListener('click', function () {
+      if (setItemColor(it.id, hex)) refresh();
+    });
+    pickLine.appendChild(b);
+  });
+  tray.appendChild(pickLine);
+
+  // 3) 渐变（a 靠盘心 → b 靠外缘）
+  const gradLine = line('渐变：');
+  SLICE_GRADS.forEach(function (g) {
+    const b = document.createElement('button');
+    b.className = 'chip wide' + (cur === g.a + ',' + g.b ? ' on' : '');
+    b.style.background = 'linear-gradient(135deg, ' + g.b + ' 0%, ' + g.a + ' 100%)';
+    b.title = g.name + '：' + g.a + ' → ' + g.b;
+    b.addEventListener('click', function () {
+      if (setItemColor(it.id, g.a + ',' + g.b)) refresh();
+    });
+    gradLine.appendChild(b);
+  });
+  tray.appendChild(gradLine);
+
+  // 4) 自定义：主色 + 副色（副色留空就是纯色）
+  const customLine = line('自定义：');
+  const inA = document.createElement('input');
+  inA.type = 'color';
+  inA.value = curA || sliceColorAt(theme, idx);
+  inA.title = '主色（靠盘心）';
+  inA.addEventListener('input', function () {
+    const b = curB;
+    if (setItemColor(it.id, b ? inA.value + ',' + b : inA.value)) syncColorBtn(colorBtn, { color: inA.value }, idx);
+  });
+  inA.addEventListener('change', refresh);
+
+  const inB = document.createElement('input');
+  inB.type = 'color';
+  inB.value = curB || (curA ? '#ffffff' : sliceColorAt(theme, idx));
+  inB.title = '副色（靠外缘）——选了就变渐变';
+  inB.addEventListener('input', function () {
+    if (setItemColor(it.id, inA.value + ',' + inB.value)) syncColorBtn(colorBtn, { color: inA.value + ',' + inB.value }, idx);
+  });
+  inB.addEventListener('change', refresh);
+  customLine.appendChild(inA);
+  customLine.appendChild(inB);
+
+  if (curB) {
+    const flat = document.createElement('button');
+    flat.className = 'chip none';
+    flat.textContent = '去渐变';
+    flat.style.width = 'auto';
+    flat.style.padding = '0 10px';
+    flat.title = '退回单色';
+    flat.addEventListener('click', function () {
+      if (setItemColor(it.id, inA.value)) refresh();
+    });
+    customLine.appendChild(flat);
+  }
+  tray.appendChild(customLine);
+  return tray;
+}
+
 function renderItems() {
   const tab = currentTab();
   itemList.innerHTML = '';
@@ -2492,6 +2750,17 @@ function renderItems() {
       /** @type {HTMLInputElement} */ (document.getElementById('item-img-file')).click();
     });
 
+    const colorBtn = document.createElement('button');
+    colorBtn.className = 'btn-link btn-color';
+    colorBtn.textContent = '🎨';
+    colorBtn.title = '给这一块单独挑颜色（纯色 / 渐变）';
+    syncColorBtn(colorBtn, it, idx);
+    colorBtn.addEventListener('click', function () {
+      if (spinning) { toast('正在转，等停了再改', true); return; }
+      openSliceColorId = openSliceColorId === it.id ? null : it.id;
+      renderItems();
+    });
+
     const del = document.createElement('button');
     del.className = 'btn-del';
     del.textContent = '✕';
@@ -2502,10 +2771,12 @@ function renderItems() {
     btns.appendChild(down);
     btns.appendChild(linkBtn);
     btns.appendChild(imgBtn);
+    btns.appendChild(colorBtn);
     btns.appendChild(del);
     li.appendChild(name);
     li.appendChild(meta);
     li.appendChild(btns);
+    if (openSliceColorId === it.id) li.appendChild(buildColorTray(it, colorBtn, idx));
     itemList.appendChild(li);
   });
   document.getElementById('item-count').textContent = tab.items.length + ' 个选项';
@@ -2586,7 +2857,9 @@ function setItemLink(id, linkTabId) {
     return;
   }
   if (linkTabId === target.linkTabId) { renderAll(); return; }
-  const r = createItem(target.name, target.weight, target.id, linkTabId);
+  const r = createItem(target.name, target.weight, {
+    id: target.id, linkTabId: linkTabId, img: target.img, color: target.color,
+  });
   if (!r.ok) { toast(r.error, true); renderAll(); return; }
   app = appWithItems(tab.items.map(function (it) { return it.id === id ? r.value : it; }));
   saveApp(app);
@@ -2682,8 +2955,10 @@ function renameItem(id, newName) {
   const tab = currentTab();
   const target = tab.items.find(function (it) { return it.id === id; });
   if (!target) return;
-  // 重命名时保留权重、跳转链接和扇形贴图
-  const r = createItem(newName, target.weight, target.id, target.linkTabId, target.img);
+  // 重命名时保留权重、跳转链接、扇形贴图和自定义颜色
+  const r = createItem(newName, target.weight, {
+    id: target.id, linkTabId: target.linkTabId, img: target.img, color: target.color,
+  });
   if (!r.ok) { toast(r.error, true); return; }
   app = appWithItems(tab.items.map(function (it) { return it.id === id ? r.value : it; }));
   saveApp(app);
@@ -2773,7 +3048,7 @@ function deleteWheel(id) {
     return Object.freeze(Object.assign({}, w, {
       items: Object.freeze(w.items.map(function (it) {
         return it.linkTabId === id
-          ? createItem(it.name, it.weight, it.id, undefined, it.img).value
+          ? createItem(it.name, it.weight, { id: it.id, img: it.img, color: it.color }).value
           : it;
       })),
     }));
@@ -3879,7 +4154,9 @@ function setItemImg(id, dataUrl) {
   const target = tab.items.find(function (it) { return it.id === id; });
   if (!target) return;
   // 显式重建字段，绝不继承旧值（避免"清除无效"类 bug）
-  const r = createItem(target.name, target.weight, target.id, target.linkTabId, dataUrl || undefined);
+  const r = createItem(target.name, target.weight, {
+    id: target.id, linkTabId: target.linkTabId, img: dataUrl || undefined, color: target.color,
+  });
   if (!r.ok) { toast(r.error, true); return; }
   app = appWithItems(tab.items.map(function (it) { return it.id === id ? r.value : it; }));
   saveApp(app);
@@ -4180,7 +4457,11 @@ async function buildShareCode(opts) {
         if (it.linkTabId && it.linkTabId.startsWith('tool:')) linkMark = it.linkTabId;
         else if (it.linkTabId && idxById.has(it.linkTabId)) linkMark = idxById.get(it.linkTabId);
         const imgKey = withImg && it.img ? addMedia(it.img) : undefined;
-        return imgKey ? [it.name, it.weight, linkMark, imgKey] : [it.name, it.weight, linkMark];
+        // [名字, 权重, 跳转标记, 贴图键, 这块的颜色]——后两项按需填充，缺的留空
+        const cell = [it.name, it.weight, linkMark];
+        if (imgKey) cell[3] = imgKey;
+        if (it.color) cell[4] = it.color;
+        return cell;
       }),
     };
   });
@@ -4420,11 +4701,14 @@ document.getElementById('btn-import').addEventListener('click', async function (
           }
           // pair[3] 是媒体字典的键：扇形贴图，和原作者的那张图逐字节相同
           const img = (typeof pair[3] === 'string' && p.media[pair[3]]) ? p.media[pair[3]] : undefined;
+          // pair[4] 是这一块自己的颜色，老分享码没有这一项
+          const color = (typeof pair[4] === 'string' && isSliceColor(pair[4])) ? pair[4] : undefined;
           return {
             name: pair[0],
             weight: pair[1],
             linkTabId: linkTabId,
             img: img,
+            color: color,
           };
         }),
       });
