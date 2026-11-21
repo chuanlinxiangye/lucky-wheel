@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 <meta name="theme-color" content="#2563eb">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,6 +12,17 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>幸运转盘 · 帮你决定</title>
+<script>
+  /* 尽早应用界面大小档位，避免首屏先小后大闪一下 */
+  (function () {
+    var v = null;
+    try { v = localStorage.getItem('wheel_ui_scale_v1'); } catch (e) { v = null; }
+    if (v !== 'standard' && v !== 'big' && v !== 'xbig') {
+      v = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ? 'big' : 'standard';
+    }
+    document.documentElement.setAttribute('data-ui', v);
+  })();
+</script>
 <style>
   :root {
     --bg: #eaf3ff;
@@ -23,8 +34,47 @@
     --muted: #5a6b85;
     --border: #cadcf5;
     --radius: 12px;
+
+    /* ---- 尺寸档位：按钮最小触控高度、图标按钮、行高、导航字号 ---- */
+    --tap: 40px;          /* 主按钮最小高度 */
+    --icon-tap: 32px;     /* 行内小图标按钮的触控方块 */
+    --row-h: 48px;        /* 选项行最小高度 */
+    --fs-btn: 15px;
+    --pad-btn: 10px 16px;
+    --fs-input: 15px;
+    --fs-row: 15px;
+    --fs-nav: 12px;
+    --ic-nav: 23px;
+    --nav-h: 54px;
+  }
+  /* 界面大小：设置抽屉里可切（手机 / 平板 / 触屏设备上默认用「大」更跟手） */
+  html[data-ui="big"] {
+    --tap: 48px;
+    --icon-tap: 42px;
+    --row-h: 58px;
+    --fs-btn: 17px;
+    --pad-btn: 13px 20px;
+    --fs-input: 17px;
+    --fs-row: 17px;
+    --fs-nav: 13px;
+    --ic-nav: 27px;
+    --nav-h: 64px;
+  }
+  html[data-ui="xbig"] {
+    --tap: 54px;
+    --icon-tap: 48px;
+    --row-h: 66px;
+    --fs-btn: 19px;
+    --pad-btn: 15px 22px;
+    --fs-input: 19px;
+    --fs-row: 19px;
+    --fs-nav: 15px;
+    --ic-nav: 30px;
+    --nav-h: 72px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* 关掉 WebView 的「字体自动放大」，浏览器和 APP 里的字号才会一致 */
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   body {
     background: #ffffff;
     color: var(--text);
@@ -81,7 +131,8 @@
     border-radius: 8px;
     color: var(--text);
     padding: 10px 12px;
-    font-size: 15px;
+    font-size: var(--fs-input);
+    min-height: var(--tap);
     outline: none;
   }
   input:focus { border-color: var(--accent); }
@@ -92,11 +143,13 @@
     color: #fff;
     border: none;
     border-radius: 8px;
-    padding: 10px 16px;
-    font-size: 15px;
+    padding: var(--pad-btn);
+    min-height: var(--tap);
+    font-size: var(--fs-btn);
     cursor: pointer;
     font-family: inherit;
     transition: filter .15s;
+    -webkit-tap-highlight-color: transparent;
   }
   button:hover { filter: brightness(1.15); }
   button.ghost {
@@ -105,37 +158,55 @@
     color: var(--text);
   }
   button.ghost:hover { border-color: var(--accent); }
-  button.small { padding: 5px 10px; font-size: 12px; }
+  button.small { padding: 6px 12px; font-size: calc(var(--fs-btn) - 3px); min-height: var(--icon-tap); }
 
   .btn-del {
     background: transparent;
     border: none;
     color: var(--muted);
-    font-size: 14px;
-    padding: 2px 6px;
+    font-size: 16px;
+    padding: 0;
+    min-height: var(--icon-tap);
+    min-width: var(--icon-tap);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
   }
-  .btn-del:hover { color: var(--accent); }
+  .btn-del:hover { color: var(--accent); background: rgba(0, 0, 0, .05); }
   .btn-link {
     background: transparent;
     border: none;
-    font-size: 14px;
-    padding: 2px 4px;
+    font-size: 16px;
+    padding: 0;
+    min-height: var(--icon-tap);
+    min-width: var(--icon-tap);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
     cursor: pointer;
-    opacity: .75;
+    opacity: .8;
   }
-  .btn-link:hover { opacity: 1; transform: scale(1.15); }
+  .btn-link:hover { opacity: 1; background: rgba(0, 0, 0, .05); }
   .btn-move {
     background: transparent;
     border: none;
     color: var(--muted);
-    font-size: 13px;
-    padding: 2px 3px;
+    font-size: 15px;
+    padding: 0;
+    min-height: var(--icon-tap);
+    min-width: calc(var(--icon-tap) * .78);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
     cursor: pointer;
     line-height: 1;
   }
-  .btn-move:hover { color: var(--accent); }
-  .btn-move[disabled] { opacity: .25; cursor: default; }
-  .item-btns { display: flex; align-items: center; gap: 2px; }
+  .btn-move:hover { color: var(--accent); background: rgba(0, 0, 0, .05); }
+  .btn-move[disabled] { opacity: .25; cursor: default; background: none; }
+  .item-btns { display: flex; align-items: center; gap: 4px; }
   #item-list select.inline-edit {
     flex: 1;
     width: auto;
@@ -182,13 +253,14 @@
   #item-list li {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     background: var(--panel-2);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 10px 12px;
-    margin-bottom: 7px;
-    font-size: 15px;
+    padding: 6px 8px 6px 12px;
+    margin-bottom: 8px;
+    min-height: var(--row-h);
+    font-size: var(--fs-row);
   }
   .item-name {
     flex: 1;
@@ -202,7 +274,8 @@
     flex: 1;
     min-width: 0;
     padding: 2px 6px;
-    font-size: 13px;
+    font-size: var(--fs-row);
+    min-height: var(--icon-tap);
   }
 
   select {
@@ -212,7 +285,8 @@
     border-radius: 8px;
     color: var(--text);
     padding: 10px 12px;
-    font-size: 15px;
+    font-size: var(--fs-input);
+    min-height: var(--tap);
   }
   #custom-themes { margin-top: 10px; }
   .custom-theme-row {
@@ -312,12 +386,15 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
-    padding: 8px 0 6px;
-    font-size: 12px;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 0 4px;
+    min-height: var(--nav-h);
+    font-size: var(--fs-nav);
     border-radius: 0;
+    -webkit-tap-highlight-color: transparent;
   }
-  .nav-btn .nav-icon { font-size: 23px; }
+  .nav-btn .nav-icon { font-size: var(--ic-nav); line-height: 1; }
   .nav-btn.active { color: var(--accent); font-weight: bold; }
 
   /* 抛硬币：默认贴图为程序绘制的一元硬币（见 renderCoinFace） */
@@ -440,7 +517,7 @@
   }
   #btn-spin {
     margin-top: 4px;
-    font-size: 20px;
+    font-size: calc(var(--fs-btn) + 5px);
     font-weight: bold;
     padding: 14px 58px;
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
@@ -528,9 +605,24 @@
       overflow-y: auto;
     }
     canvas { max-width: 84vw; }
-    #btn-spin { font-size: 18px; padding: 13px 48px; }
-    aside { width: min(380px, 100vw); }
+    #btn-spin {
+      font-size: calc(var(--fs-btn) + 3px);
+      padding: 14px 52px;
+      min-height: calc(var(--tap) + 8px);
+    }
+    aside { width: min(380px, 100vw); padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
     #install-banner { margin: 18px auto 0; }
+  }
+  /* 触屏设备：拖动时不慎触发的长按菜单、蓝色高亮都关掉，减少误触 */
+  @media (pointer: coarse) {
+    body { -webkit-tap-highlight-color: transparent; }
+    #item-list li, .nav-btn, button { -webkit-user-select: none; user-select: none; }
+    .item-name { -webkit-user-select: text; user-select: text; }
+    /* 选项行拆两行：第一行名字和权重，第二行按钮靠右，按钮才能做大又不挤掉名字 */
+    #item-list li { flex-wrap: wrap; row-gap: 2px; }
+    .item-name { flex: 1 1 auto; min-width: 0; }
+    .item-meta { order: 2; }
+    .item-btns { order: 3; flex: 1 0 100%; justify-content: flex-end; }
   }
 </style>
 </head>
@@ -539,6 +631,16 @@
   <button class="panel-close" id="btn-close-panel">收起 ✕</button>
   <h1>🎡 幸运转盘</h1>
   <p class="subtitle">选不出来？让转盘替你决定。</p>
+
+  <section>
+    <h2>界面大小</h2>
+    <select id="ui-scale">
+      <option value="standard">标准（和以前一样）</option>
+      <option value="big">大（推荐：手机 / 平板）</option>
+      <option value="xbig">特大（手指粗、看不清小字）</option>
+    </select>
+    <p class="muted" style="margin-top:8px">按钮、输入框、选项行、底部导航会一起变大，点起来更跟手、不容易误触。设一次就记住。</p>
+  </section>
 
   <section>
     <h2>当前转盘的选项 <span id="item-count" class="muted"></span></h2>
@@ -761,6 +863,13 @@
         <li><b>支持格式</b>：<b>MP3 最稳</b>（推荐）；WAV、M4A/AAC 也可以；OGG 在 Chrome 上能用但 iPhone 的 Safari 不行；<b>MP4 不建议</b>——它是视频容器，浏览器把它当音频播放经常失败，请先转成 MP3。</li>
         <li><b>文件大小</b>：单个文件请在 <b>1MB 以内</b>（最多 1.5MB）。因为音频要存在浏览器本地，而总空间只有 5MB 左右，还要和你导入的扇形贴图共用。超了会拒绝并提示，存储满了会自动回滚，不会把你的设置搞坏。建议掐一段 1~3 秒的高潮部分。</li>
         <li><b>只在本机生效</b>：自定义音频保存在你这台设备上，<b>分享码不包含音频</b>（体积太大塞不进去），别人导入你的转盘听到的还是内置合成音。</li>
+      </ul>
+
+      <h3>🔍 界面大小（手机上觉得小就调这里）</h3>
+      <ul>
+        <li>「⚙️ 设置」抽屉最上面有<b>界面大小</b>：<b>标准 / 大 / 特大</b>。按钮、输入框、选项行、底部导航会一起放大，触控区域更大、不容易点错，设一次就记住。</li>
+        <li>触屏设备（手机、平板）默认就是「大」；手机上还嫌小就选<b>特大</b>。选项列表在手机上会自动拆成两行——第一行名字和权重，第二行操作按钮靠右，按钮做大也不会把名字挤没。</li>
+        <li>另外现在支持<b>双指放大</b>整页（以前关掉了），临时看不清可以直接捏合放大。</li>
       </ul>
 
       <h3>📱 浏览器要求（重要）</h3>
@@ -2485,6 +2594,24 @@ sfxStyleSelect.addEventListener('change', function () {
   playResultChime();
   setTimeout(sfxCoin, 650);
   toast('已切换音效风格：' + SFX_STYLES[sfxStyleSelect.value].name);
+});
+
+// 界面大小：标准 / 大 / 特大（手机默认「大」）
+const UI_SCALE_KEY = 'wheel_ui_scale_v1';
+const UI_SCALE_NAMES = { standard: '标准', big: '大', xbig: '特大' };
+const uiScaleSelect = /** @type {HTMLSelectElement} */ (document.getElementById('ui-scale'));
+/** @type {() => 'standard'|'big'|'xbig'} */
+function uiScaleId() {
+  const v = document.documentElement.getAttribute('data-ui');
+  return v === 'big' || v === 'xbig' ? v : 'standard';
+}
+uiScaleSelect.value = uiScaleId();
+uiScaleSelect.addEventListener('change', function () {
+  const v = uiScaleSelect.value === 'xbig' ? 'xbig' : uiScaleSelect.value === 'big' ? 'big' : 'standard';
+  document.documentElement.setAttribute('data-ui', v);
+  localStorage.setItem(UI_SCALE_KEY, v);
+  drawWheel();
+  toast('界面大小：' + UI_SCALE_NAMES[v]);
 });
 
 // 扇形贴图方式：铺满 / 留边
