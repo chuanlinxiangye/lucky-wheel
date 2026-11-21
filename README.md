@@ -2,7 +2,7 @@
 
 一个单文件实现的决策小工具：转盘、抛硬币、丢骰子、随机数字。手机上可以装成独立 App，断网也能用。
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/License-PolyForm%20Noncommercial%201.0.0-orange.svg)](LICENSE)
 [![Single file](https://img.shields.io/badge/build-none%20%C2%B7%20single%20file-success)](index.html)
 ![AI-assisted](https://img.shields.io/badge/AI--assisted-project-8b5cf6)
 
@@ -87,4 +87,14 @@ python3 -m http.server 8000
 
 ## 许可
 
-[MIT](LICENSE) —— 随便用、随便改、随便商用，保留版权声明即可。
+**[PolyForm Noncommercial 1.0.0](LICENSE)** —— 开源，但**不允许商用**。
+
+- **可以**：自己用、随便改、把改过的版本再分享给别人（要把这份许可一起传下去）、在学校 / 公益组织 / 政府机构里使用。个人研究、试验、私人娱乐、业余爱好都在允许范围内。
+- **不可以**：拿去卖、打包进收费产品或服务、用在公司的业务流程里、放在有商业目的的项目里。这些情况需要单独找我授权。
+- 不是「保留所有权利」，也不是「随便用」——夹在中间：**代码全给你，商业用途另谈**。
+
+> Required Notice: Copyright (c) 2026 chuanlinxiangye — https://github.com/chuanlinxiangye/lucky-wheel
+
+许可原文是英文，具有法律效力。上面这段中文只是方便理解，有歧义时以 [LICENSE](LICENSE) 的英文原文为准。
+
+为什么不用 MIT：MIT 允许商用，谁都可以拿这套代码做个收费 App 卖。这个项目想保持免费和可改造，但不想变成别人的商品。
