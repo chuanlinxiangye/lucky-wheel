@@ -1,5 +1,8 @@
 node_modules/
 .gh-user.json
 .gh-repo.json
+.gh-pages.json
 .tmp-*
 *.log
+pwabuilder-apk.zip
+apk-output/
