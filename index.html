@@ -246,6 +246,16 @@
   }
   .checkbox-row input { width: 18px; height: 18px; accent-color: var(--accent); }
 
+  .sfx-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  .sfx-row .sfx-name { flex: 1; }
+  .sfx-row .sfx-name small { color: var(--muted); font-size: 12px; }
+
   /* ---- 主区域 ---- */
   main {
     flex: 1;
@@ -577,6 +587,26 @@
   </section>
 
   <section>
+    <h2>音效</h2>
+    <label class="checkbox-row">
+      <input type="checkbox" id="sound-toggle" checked>
+      开启全部音效（转盘跳齿、硬币、骰子、点击）
+    </label>
+    <p class="muted" style="margin-top:10px">所有声音都由浏览器现场合成，不需要联网，也不占用存储空间。</p>
+    <label for="sfx-style" style="margin-top:16px">音效风格（内置四种，选完自动试听）</label>
+    <select id="sfx-style"></select>
+    <p class="muted" style="margin-top:8px">风格只影响内置合成音；如果你给某个动作导入了自己的音频，那个动作仍然用你的音频。</p>
+  </section>
+
+  <section>
+    <h2>自定义音效（可选）</h2>
+    <p class="muted" style="margin-bottom:12px">把自己喜欢的音频换到某个动作上，和扇形贴图一样从本地选文件。支持 <b>MP3</b>（最稳）、WAV、M4A、OGG；<b>MP4 不推荐</b>（视频容器，多数浏览器当音频播放会失败）。单个文件建议 1MB 以内，音频只存在这台设备里，不会上传。</p>
+    <div id="sfx-rows"></div>
+    <input type="file" id="sfx-file" accept="audio/*,.mp3,.m4a,.wav,.ogg,.aac,.flac" style="display:none">
+    <p class="muted" id="sfx-usage" style="margin-top:8px"></p>
+  </section>
+
+  <section>
     <h2>分享当前转盘</h2>
     <button id="btn-gen-code" class="ghost">生成分享码</button>
     <textarea id="share-code" class="code-box" readonly placeholder="点上面的按钮生成分享码" style="display:none;margin-top:8px"></textarea>
@@ -677,6 +707,7 @@
         <li><b>跳转</b>：点选项旁的「🔗」，可以设置转到这个选项后跳去别的转盘，或跳去硬币/骰子/数字工具页。转中后弹窗里会出现跳转按钮。</li>
         <li><b>扇形贴图</b>：点选项旁的「🖼」，选一张图，在裁剪编辑器里拖动/缩放/旋转/翻转，确认后图片就贴进那个扇形。再点一次可选「更换」或「清除」。</li>
         <li><b>主题换肤</b>：在「⚙️ 设置」抽屉里下拉切换 10 种配色，整页按钮、指针、中心点都会跟着变色。「新建主题」可选多色自选或单色渐变（选一个颜色自动生成深浅，选项越多渐变越顺滑）。</li>
+        <li><b>音效</b>：转动、抛硬币、摇骰子、切页面都有声音，详见下面「🔊 音效」一节。</li>
         <li><b>淘汰制</b>：勾选「转中后自动移除该选项」，适合多人轮流淘汰。</li>
         <li><b>分享</b>：「生成分享码」会把当前转盘和它跳转链上的所有转盘打包成一串码，发给朋友；对方在「导入转盘」里粘贴即可得到一模一样的转盘（配色也带上）。</li>
       </ul>
@@ -698,6 +729,27 @@
         <li>「生成个数」可一次出 1~100 个；关闭「允许重复」则一批之内数字互不重复。</li>
       </ul>
 
+      <h3>🔊 音效</h3>
+      <ul>
+        <li><b>内置音效</b>（由浏览器现场合成，不联网、不占存储）：
+          <br>· 转盘旋转时是机械跳齿的「哒哒」声，转得越快越密、快停时一下一下变慢；
+          <br>· 转出结果是一段清脆的「冰晶三连音」；
+          <br>· 抛硬币有起手的金属「叮」、空中翻飞的连串轻响、落桌的「锵」；
+          <br>· 丢骰子是摇盅的沙沙撞击加落定的「咔哒」；
+          <br>· 随机数字出一声清铃；
+          <br>· 切换页面和转盘有很轻的「嗒」。</li>
+        <li><b>总开关</b>：「⚙️ 设置 → 音效」里的勾选框，取消后所有声音彻底静音，设置会记住。</li>
+        <li><b>四种音效风格</b>：同一套动作可以换不同音色，在「⚙️ 设置 → 音效风格」里选，选完会自动试听：
+          <br>· <b>冰晶（默认）</b>——清亮、玻璃钟琴感；
+          <br>· <b>木质（木琴）</b>——低沉、敲木头的闷响，跳齿像老式转盘；
+          <br>· <b>电子 8-bit</b>——方波、游戏机提示音那种；
+          <br>· <b>轻柔（马林巴）</b>——圆润小声，余音长，适合安静场合。</li>
+        <li><b>换成自己的音频</b>：「⚙️ 设置 → 自定义音效」里，五个动作（转出结果 / 转盘跳齿 / 抛硬币 / 丢骰子 / 点击切换）可以分别导入本地文件替换。每行有「🎵 导入」「试听」「✕ 恢复默认」。</li>
+        <li><b>支持格式</b>：<b>MP3 最稳</b>（推荐）；WAV、M4A/AAC 也可以；OGG 在 Chrome 上能用但 iPhone 的 Safari 不行；<b>MP4 不建议</b>——它是视频容器，浏览器把它当音频播放经常失败，请先转成 MP3。</li>
+        <li><b>文件大小</b>：单个文件请在 <b>1MB 以内</b>（最多 1.5MB）。因为音频要存在浏览器本地，而总空间只有 5MB 左右，还要和你导入的扇形贴图共用。超了会拒绝并提示，存储满了会自动回滚，不会把你的设置搞坏。建议掐一段 1~3 秒的高潮部分。</li>
+        <li><b>只在本机生效</b>：自定义音频保存在你这台设备上，<b>分享码不包含音频</b>（体积太大塞不进去），别人导入你的转盘听到的还是内置合成音。</li>
+      </ul>
+
       <h3>📱 浏览器要求（重要）</h3>
       <ul>
         <li><b>不追求安装怎么办</b>：如果你只是临时用一下，不需要在桌面设置快捷方式、也不需要离线使用，那么用任何普通浏览器打开链接就行——转盘、硬币、骰子、数字这些功能在什么浏览器里都能正常用。</li>
@@ -709,9 +761,10 @@
 
       <h3>💾 数据与离线</h3>
       <ul>
-        <li>所有转盘、主题、图片都自动保存在这台设备的浏览器里，换设备不会同步。</li>
+        <li>所有转盘、主题、图片、自定义音频都自动保存在这台设备的浏览器里，换设备不会同步。</li>
         <li>安装到手机桌面后（浏览器菜单里的「添加到主屏幕」，或页面里的安装按钮），断网也能正常使用。</li>
-        <li>分享码不包含图片，跳转链接会自动映射到对方设备上的新转盘。</li>
+        <li>分享码只带选项、权重、配色和跳转关系，不带图片和音频；跳转链接会自动映射到对方设备上的新转盘。</li>
+        <li>安卓手机还可以用安装包（APK）装成独立 APP，图标在桌面上、全屏无地址栏；APP 打开的就是网页版本身，所以网页更新了什么，APP 里立刻就是最新的，不用重新安装。</li>
       </ul>
     </div>
   </div>
@@ -1098,6 +1151,460 @@ function toast(msg, isError) {
   clearTimeout(Number(toastEl.dataset.timer || 0));
   toastEl.dataset.timer = String(setTimeout(function () { toastEl.className = 'toast'; }, 2600));
 }
+
+// ---- 结果音效：浏览器现场合成，不依赖任何音频文件 ----
+const SOUND_KEY = 'wheel_sound_enabled_v1';
+
+/** @type {() => boolean} */
+function soundOn() {
+  return localStorage.getItem(SOUND_KEY) !== '0';
+}
+
+/** @type {AudioContext | null} */
+let audioCtx = null;
+
+/** 懒创建音频上下文，并在 iOS 上完成解锁（必须在用户手势里调用） */
+/** @type {() => AudioContext | null} */
+function ensureAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || /** @type {any} */ (window).webkitAudioContext;
+    if (!AC) return null;
+    audioCtx = new AC();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// ---- 音效风格：同一套动作，四种音色 ----
+const STYLE_KEY = 'wheel_sfx_style_v1';
+
+/**
+ * 风格参数说明：
+ * wave   波形（square 电子感、triangle 木质、sine 圆润）
+ * pitch  整体音高倍率（<1 更低更厚，>1 更高更亮）
+ * gain   整体音量倍率
+ * bright 噪声滤波器倍率（<1 更闷，>1 更亮更脆）
+ * decay  余音长短倍率
+ * notes  出结果那三个音的频率
+ * sparkle 结果音后面是否跟一小撮高频碎屑噪声
+ */
+const SFX_STYLES = {
+  ice: {
+    name: '冰晶（默认）',
+    wave: 'sine', pitch: 1, gain: 1, bright: 1, decay: 1,
+    notes: [1568.0, 2093.0, 2637.0], sparkle: true
+  },
+  wood: {
+    name: '木质（木琴）',
+    wave: 'triangle', pitch: 0.62, gain: 1.1, bright: 0.55, decay: 1.2,
+    notes: [523.25, 659.25, 783.99], sparkle: false
+  },
+  chip: {
+    name: '电子 8-bit',
+    wave: 'square', pitch: 1.32, gain: 0.5, bright: 1.7, decay: 0.6,
+    notes: [659.25, 880.0, 1318.51], sparkle: false
+  },
+  soft: {
+    name: '轻柔（马林巴）',
+    wave: 'sine', pitch: 0.75, gain: 0.75, bright: 0.7, decay: 1.6,
+    notes: [880.0, 1108.73, 1318.51], sparkle: false
+  }
+};
+
+/** @type {() => string} */
+function sfxStyleId() {
+  const v = localStorage.getItem(STYLE_KEY);
+  return v && SFX_STYLES[v] ? v : 'ice';
+}
+
+/** 当前风格参数 */
+function S() {
+  return SFX_STYLES[sfxStyleId()];
+}
+
+/** 出结果的三连音：按当前风格换音高、波形和余音 */
+/** @type {() => void} */
+function playResultChime() {
+  if (!soundOn()) return;
+  if (playSample('result')) return;
+  const ac = ensureAudio();
+  if (!ac) return;
+  const st = S();
+  const now = ac.currentTime + 0.01;
+  const notes = [
+    { f: st.notes[0], t: 0, gain: 0.20 },
+    { f: st.notes[1], t: 0.095, gain: 0.17 },
+    { f: st.notes[2], t: 0.19, gain: 0.15 }
+  ];
+  notes.forEach(function (n) {
+    // 基音 + 两个泛音（2.76 / 5.4 倍频），泛音衰减更快；方波不加泛音（本身就是谐波堆）
+    const parts = st.wave === 'square' ? [1] : [1, 2.76, 5.4];
+    parts.forEach(function (mult, i) {
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      osc.type = st.wave;
+      osc.frequency.value = n.f * mult;
+      const peak = (n.gain * st.gain) / (i === 0 ? 1 : i === 1 ? 3.5 : 9);
+      const start = now + n.t;
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.linearRampToValueAtTime(peak, start + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + (0.55 - i * 0.12) * st.decay);
+      osc.connect(g).connect(ac.destination);
+      osc.start(start);
+      osc.stop(start + 0.6 * st.decay + 0.1);
+    });
+  });
+  if (!st.sparkle) return;
+  // 碎冰感：一段极短的高频噪声，紧跟第三个音
+  const dur = 0.2;
+  const size = Math.floor(ac.sampleRate * dur);
+  const buf = ac.createBuffer(1, size, ac.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < size; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / size, 3);
+  }
+  const src = ac.createBufferSource();
+  src.buffer = buf;
+  const hp = ac.createBiquadFilter();
+  hp.type = 'highpass';
+  hp.frequency.value = 6000;
+  const ng = ac.createGain();
+  ng.gain.value = 0.05;
+  src.connect(hp).connect(ng).connect(ac.destination);
+  src.start(now + 0.22);
+}
+
+// ---- 合成工具：噪声 + 音调 + 包络 ----
+
+/** @type {AudioBuffer | null} */
+let noiseBuf = null;
+
+/** 复用同一段白噪声，避免每次触发都重新生成 */
+/** @type {(ac: AudioContext) => AudioBuffer} */
+function noiseBuffer(ac) {
+  if (!noiseBuf || noiseBuf.sampleRate !== ac.sampleRate) {
+    const len = Math.floor(ac.sampleRate * 0.5);
+    const buf = ac.createBuffer(1, len, ac.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    noiseBuf = buf;
+  }
+  return noiseBuf;
+}
+
+/** 噪声打击：filter 决定音色（'bandpass' 木头/金属感，'lowpass' 闷响，'highpass' 沙沙） */
+function noiseHit(ac, when, dur, gain, filterType, freq, q) {
+  const src = ac.createBufferSource();
+  src.buffer = noiseBuffer(ac);
+  const f = ac.createBiquadFilter();
+  f.type = filterType;
+  f.frequency.value = freq;
+  if (q) f.Q.value = q;
+  const g = ac.createGain();
+  g.gain.setValueAtTime(gain, when);
+  g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+  src.connect(f).connect(g).connect(ac.destination);
+  src.start(when);
+  src.stop(when + dur + 0.02);
+}
+
+/** 单个音：快速起音 + 指数衰减（敲击类音色的通用形） */
+function tone(ac, when, freq, dur, gain, type) {
+  const o = ac.createOscillator();
+  const g = ac.createGain();
+  o.type = type || 'sine';
+  o.frequency.setValueAtTime(freq, when);
+  g.gain.setValueAtTime(0.0001, when);
+  g.gain.linearRampToValueAtTime(gain, when + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+  o.connect(g).connect(ac.destination);
+  o.start(when);
+  o.stop(when + dur + 0.02);
+}
+
+// ---- 各类音效 ----
+
+/** 界面点击：很轻的一下「嗒」 */
+function sfxTap() {
+  if (!soundOn()) return;
+  if (playSample('tap')) return;
+  const ac = ensureAudio();
+  if (!ac) return;
+  const st = S();
+  const t = ac.currentTime + 0.005;
+  noiseHit(ac, t, 0.028, 0.07 * st.gain, 'bandpass', 2200 * st.bright, 1.4);
+  tone(ac, t, 1180 * st.pitch, 0.03 * st.decay, 0.025 * st.gain, st.wave);
+}
+
+/** 转盘跳齿：机械「哒」一声，每个扇区边界触发一次 */
+function sfxTick() {
+  if (!soundOn()) return;
+  if (playSample('tick')) return;
+  const ac = ensureAudio();
+  if (!ac) return;
+  const st = S();
+  const t = ac.currentTime;
+  noiseHit(ac, t, 0.018, 0.10 * st.gain, 'bandpass', 2800 * st.bright, 2.2);
+  tone(ac, t, 1500 * st.pitch, 0.035 * st.decay, 0.045 * st.gain, st.wave);
+}
+
+/** 抛硬币：起始「叮」→ 空中翻飞的连串轻响 → 落桌「锵」 */
+function sfxCoin() {
+  if (!soundOn()) return;
+  if (playSample('coin')) return;
+  const ac = ensureAudio();
+  if (!ac) return;
+  const st = S();
+  const t0 = ac.currentTime + 0.01;
+  // 起手：拇指弹起硬币的金属声
+  tone(ac, t0, 2650 * st.pitch, 0.18 * st.decay, 0.09 * st.gain, st.wave);
+  tone(ac, t0, 3975 * st.pitch, 0.10 * st.decay, 0.035 * st.gain, st.wave);
+  noiseHit(ac, t0, 0.05, 0.05 * st.gain, 'highpass', 4200 * st.bright);
+  // 空中旋转：连串短促轻响，音高随机（硬币翻面时的闪动感）
+  for (let k = 1; k <= 6; k++) {
+    const when = t0 + k * 0.12;
+    tone(ac, when, (1900 + Math.random() * 900) * st.pitch, 0.05 * st.decay, 0.032 * st.gain, st.wave);
+    noiseHit(ac, when, 0.02, 0.022 * st.gain, 'bandpass', 5000 * st.bright, 3);
+  }
+  // 落定：硬币磕在桌面上
+  const land = t0 + 0.87;
+  tone(ac, land, 1520 * st.pitch, 0.28 * st.decay, 0.10 * st.gain, st.wave);
+  tone(ac, land, 2280 * st.pitch, 0.20 * st.decay, 0.055 * st.gain, st.wave);
+  noiseHit(ac, land, 0.06, 0.09 * st.gain, 'lowpass', 1300 * st.bright);
+}
+
+/** 丢骰子：摇盅的沙沙撞击 → 骰子落定「咔哒」 */
+function sfxDice() {
+  if (!soundOn()) return;
+  if (playSample('dice')) return;
+  const ac = ensureAudio();
+  if (!ac) return;
+  const st = S();
+  const t0 = ac.currentTime + 0.01;
+  // 摇：不规则的短促碰撞，间隔随机，音量渐弱（像在杯子里晃）
+  let acc = 0.02;
+  for (let k = 0; k < 11; k++) {
+    const when = t0 + acc;
+    const decay = 1 - k / 14;
+    noiseHit(ac, when, 0.03, 0.075 * decay * st.gain, 'bandpass', (1400 + Math.random() * 1500) * st.bright, 3);
+    if (k % 3 === 0) tone(ac, when, (260 + Math.random() * 90) * st.pitch, 0.05 * st.decay, 0.05 * decay * st.gain, st.wave);
+    acc += 0.055 + Math.random() * 0.045;
+  }
+  // 落定：硬碰硬的「咔哒」
+  const land = t0 + 0.86;
+  noiseHit(ac, land, 0.07, 0.16 * st.gain, 'lowpass', 900 * st.bright);
+  noiseHit(ac, land, 0.04, 0.09 * st.gain, 'bandpass', 2600 * st.bright, 1.6);
+  tone(ac, land, 185 * st.pitch, 0.13 * st.decay, 0.10 * st.gain, st.wave);
+}
+
+/** 随机数字出结果：一声清亮短铃 */
+function sfxDing() {
+  if (!soundOn()) return;
+  const ac = ensureAudio();
+  if (!ac) return;
+  const st = S();
+  const t = ac.currentTime + 0.01;
+  tone(ac, t, st.notes[0] * 1.12, 0.45 * st.decay, 0.10 * st.gain, st.wave);
+  tone(ac, t, st.notes[0] * 1.68, 0.28 * st.decay, 0.035 * st.gain, st.wave);
+  noiseHit(ac, t, 0.03, 0.03 * st.gain, 'highpass', 6000 * st.bright);
+}
+
+// ---- 自定义音效：用本机音频替换上面的合成音 ----
+const SFX_KEY = 'wheel_custom_sfx_v1';
+const SFX_MAX_BYTES = 1.5 * 1024 * 1024;
+
+/** 可替换的音效槽位 */
+const SFX_SLOTS = [
+  { id: 'result', name: '转出结果' },
+  { id: 'tick', name: '转盘跳齿' },
+  { id: 'coin', name: '抛硬币' },
+  { id: 'dice', name: '丢骰子' },
+  { id: 'tap', name: '点击切换' }
+];
+
+/** @type {Record<string, string>} 槽位 → dataURL */
+let customSfx = {};
+try {
+  const raw = localStorage.getItem(SFX_KEY);
+  if (raw) customSfx = JSON.parse(raw) || {};
+} catch (e) {
+  customSfx = {};
+}
+
+/** @type {Map<string, AudioBuffer>} 解码后的音频，播放时直接复用 */
+const sfxBuffers = new Map();
+
+/** @type {() => boolean} */
+function saveCustomSfx() {
+  try {
+    localStorage.setItem(SFX_KEY, JSON.stringify(customSfx));
+    return true;
+  } catch (e) {
+    return false; // 超出本地存储配额
+  }
+}
+
+/** @type {(slot: string, dataUrl: string) => Promise<void>} */
+async function decodeSfx(slot, dataUrl) {
+  const ac = ensureAudio();
+  if (!ac) return;
+  try {
+    const arr = await (await fetch(dataUrl)).arrayBuffer();
+    const buf = await ac.decodeAudioData(arr);
+    sfxBuffers.set(slot, buf);
+  } catch (e) {
+    sfxBuffers.delete(slot);
+    toast('这个音频解不开，换一个 MP3 试试', true);
+  }
+}
+
+/** @type {number} 自定义跳齿音的上次播放时刻（毫秒） */
+let lastTickSampleAt = 0;
+
+/** 播放自定义音效；返回 true 表示已被自定义音接管，不再走合成音 */
+/** @type {(slot: string) => boolean} */
+function playSample(slot) {
+  const buf = sfxBuffers.get(slot);
+  if (!buf) return false;
+  // 跳齿触发很密（最高约 18 次/秒），自定义音频若较长会叠成噪音，这里强制留间隔
+  if (slot === 'tick') {
+    const nowMs = performance.now();
+    if (nowMs - (lastTickSampleAt || 0) < 70) return true;
+    lastTickSampleAt = nowMs;
+  }
+  const ac = ensureAudio();
+  if (!ac) return false;
+  const src = ac.createBufferSource();
+  src.buffer = buf;
+  const g = ac.createGain();
+  g.gain.value = 0.9;
+  src.connect(g).connect(ac.destination);
+  src.start();
+  return true;
+}
+
+/** 各槽位对应的合成音，供「试听」在未自定义时使用 */
+const SFX_SYNTH = {
+  result: function () { playResultChime(); },
+  tick: function () { sfxTick(); },
+  coin: function () { sfxCoin(); },
+  dice: function () { sfxDice(); },
+  tap: function () { sfxTap(); }
+};
+
+/** @type {(slot: string) => void} */
+function previewSfx(slot) {
+  if (!soundOn()) { toast('音效总开关是关的，先打开上面的勾选', true); return; }
+  ensureAudio();
+  if (playSample(slot)) return;
+  const fn = SFX_SYNTH[slot];
+  if (fn) fn();
+}
+
+/** 渲染自定义音效的五行控件 */
+function renderSfxRows() {
+  const box = document.getElementById('sfx-rows');
+  box.innerHTML = '';
+  SFX_SLOTS.forEach(function (s) {
+    const row = document.createElement('div');
+    row.className = 'sfx-row';
+
+    const name = document.createElement('span');
+    name.className = 'sfx-name';
+    name.textContent = s.name;
+    if (customSfx[s.id]) {
+      const tag = document.createElement('small');
+      tag.textContent = ' · 已自定义';
+      name.appendChild(tag);
+    }
+    row.appendChild(name);
+
+    const imp = document.createElement('button');
+    imp.className = 'ghost small';
+    imp.textContent = '🎵 导入';
+    imp.addEventListener('click', function () {
+      sfxPickSlot = s.id;
+      sfxFileInput.click();
+    });
+    row.appendChild(imp);
+
+    const prev = document.createElement('button');
+    prev.className = 'ghost small';
+    prev.textContent = '试听';
+    prev.addEventListener('click', function () { previewSfx(s.id); });
+    row.appendChild(prev);
+
+    if (customSfx[s.id]) {
+      const del = document.createElement('button');
+      del.className = 'ghost small';
+      del.textContent = '✕';
+      del.title = '恢复合成音';
+      del.addEventListener('click', function () {
+        delete customSfx[s.id];
+        sfxBuffers.delete(s.id);
+        saveCustomSfx();
+        renderSfxRows();
+        toast('已恢复默认音效');
+      });
+      row.appendChild(del);
+    }
+    box.appendChild(row);
+  });
+  renderSfxUsage();
+}
+
+/** 显示当前音频占用的本地存储（浏览器约 5MB 上限，图片也占） */
+function renderSfxUsage() {
+  const el = document.getElementById('sfx-usage');
+  let bytes = 0;
+  Object.keys(customSfx).forEach(function (k) { bytes += customSfx[k].length; });
+  el.textContent = bytes
+    ? '自定义音效已占用约 ' + Math.round(bytes / 1024) + ' KB 本地存储（上限约 5000 KB，超了会提示）'
+    : '当前全部使用合成音，没有占用存储。';
+}
+
+const sfxFileInput = /** @type {HTMLInputElement} */ (document.getElementById('sfx-file'));
+/** @type {string | null} */
+let sfxPickSlot = null;
+
+/** @type {(file: File) => Promise<string>} */
+function fileToDataUrl(file) {
+  return new Promise(function (resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function () { resolve(String(reader.result)); };
+    reader.onerror = function () { reject(new Error('读取失败')); };
+    reader.readAsDataURL(file);
+  });
+}
+
+sfxFileInput.addEventListener('change', async function () {
+  const file = sfxFileInput.files && sfxFileInput.files[0];
+  const slot = sfxPickSlot;
+  sfxFileInput.value = '';
+  sfxPickSlot = null;
+  if (!file || !slot) return;
+  if (file.size > SFX_MAX_BYTES) {
+    toast('文件 ' + Math.round(file.size / 1024) + 'KB 太大了，建议 1MB 以内的短音效', true);
+    return;
+  }
+  let dataUrl;
+  try {
+    dataUrl = await fileToDataUrl(file);
+  } catch (e) {
+    toast('读取文件失败，换一个试试', true);
+    return;
+  }
+  const prev = customSfx[slot];
+  customSfx[slot] = dataUrl;
+  if (!saveCustomSfx()) {
+    if (prev) customSfx[slot] = prev; else delete customSfx[slot];
+    toast('本地存储放不下了，先删掉一些扇形贴图或旧音效', true);
+    return;
+  }
+  await decodeSfx(slot, dataUrl);
+  renderSfxRows();
+  toast('已换上自定义音效，点「试听」听听');
+});
 
 /** @type {() => WheelTab} */
 function currentTab() {
@@ -1592,6 +2099,8 @@ function switchWheel(id) {
   if (id === app.activeId) return;
   if (spinning) { toast('正在转，等停了再换', true); return; }
   if (!app.wheels.some(function (w) { return w.id === id; })) { toast('转盘不存在', true); return; }
+  ensureAudio();
+  sfxTap();
   app = Object.freeze({ wheels: app.wheels, activeId: id, customThemes: app.customThemes });
   saveApp(app);
   renderAll();
@@ -1769,12 +2278,24 @@ function spin() {
 
   const duration = 4200 + Math.random() * 800;
   const t0 = performance.now();
+  let lastSlice = -1;
+  let lastTickAt = 0;
 
   function frame(now) {
     const p = Math.min((now - t0) / duration, 1);
     const ease = 1 - Math.pow(1 - p, 4); // 四次缓出
-    angleByTab.set(tab.id, startAngle + (targetAngle - startAngle) * ease);
+    const angle = startAngle + (targetAngle - startAngle) * ease;
+    angleByTab.set(tab.id, angle);
     drawWheel();
+    // 跳齿声：每越过一个扇区边界响一次；限流 55ms，避免高速时糊成嗡鸣
+    const sliceIdx = Math.floor(angle / slice);
+    if (sliceIdx !== lastSlice) {
+      lastSlice = sliceIdx;
+      if (now - lastTickAt > 55) {
+        lastTickAt = now;
+        sfxTick();
+      }
+    }
     if (p < 1) {
       requestAnimationFrame(frame);
     } else {
@@ -1791,6 +2312,7 @@ function spin() {
 function showResult(winner) {
   resultText.textContent = winner.name;
   resultModal.classList.add('show');
+  playResultChime();
   const removeBtn = document.getElementById('btn-remove-winner');
   removeBtn.style.display = currentTab().removeWinner ? 'none' : '';
   removeBtn.onclick = function () {
@@ -1843,7 +2365,37 @@ document.getElementById('item-name').addEventListener('keydown', function (e) {
 });
 
 canvas.addEventListener('click', spin);
-document.getElementById('btn-spin').addEventListener('click', spin);
+document.getElementById('btn-spin').addEventListener('click', function () {
+  ensureAudio(); // iOS：在用户手势里解锁音频，后续结果音效才能响
+  spin();
+});
+
+// 音效开关（全局设置，独立存储，不进转盘数据）
+const soundToggle = /** @type {HTMLInputElement} */ (document.getElementById('sound-toggle'));
+soundToggle.checked = soundOn();
+soundToggle.addEventListener('change', function () {
+  localStorage.setItem(SOUND_KEY, soundToggle.checked ? '1' : '0');
+  if (soundToggle.checked) playResultChime(); // 打开时立刻试听
+  toast(soundToggle.checked ? '音效已开启' : '音效已关闭');
+});
+
+// 音效风格选择
+const sfxStyleSelect = /** @type {HTMLSelectElement} */ (document.getElementById('sfx-style'));
+Object.keys(SFX_STYLES).forEach(function (id) {
+  const opt = document.createElement('option');
+  opt.value = id;
+  opt.textContent = SFX_STYLES[id].name;
+  sfxStyleSelect.appendChild(opt);
+});
+sfxStyleSelect.value = sfxStyleId();
+sfxStyleSelect.addEventListener('change', function () {
+  localStorage.setItem(STYLE_KEY, sfxStyleSelect.value);
+  ensureAudio();
+  // 选完立刻放一遍结果音，顺便把硬币和跳齿也示范一下
+  playResultChime();
+  setTimeout(sfxCoin, 650);
+  toast('已切换音效风格：' + SFX_STYLES[sfxStyleSelect.value].name);
+});
 
 themeSelect.addEventListener('change', function () { setTheme(themeSelect.value); });
 
@@ -1986,6 +2538,8 @@ backdrop.addEventListener('click', closeDrawer);
 
 /** @type {(name: 'wheel' | 'coin' | 'dice' | 'number' | 'help' | 'panel') => void} */
 function switchPage(name) {
+  ensureAudio();
+  sfxTap();
   if (name === 'panel') { openDrawer(); return; }
   ['wheel', 'coin', 'dice', 'number', 'help'].forEach(function (p) {
     document.getElementById('page-' + p).classList.toggle('active', p === name);
@@ -2005,6 +2559,8 @@ let coinBusy = false;
 document.getElementById('btn-flip').addEventListener('click', function () {
   if (coinBusy) return;
   coinBusy = true;
+  ensureAudio();
+  sfxCoin();
   const coin = document.getElementById('coin');
   const resultEl = document.getElementById('coin-result');
   resultEl.textContent = '';
@@ -2033,6 +2589,8 @@ let diceBusy = false;
 document.getElementById('btn-roll').addEventListener('click', function () {
   if (diceBusy) return;
   diceBusy = true;
+  ensureAudio();
+  sfxDice();
   const count = Math.max(1, Math.min(6, parseInt(/** @type {HTMLSelectElement} */ (document.getElementById('dice-count')).value, 10) || 1));
   const facesEl = document.getElementById('dice-faces');
   const resultEl = document.getElementById('dice-result');
@@ -2146,6 +2704,8 @@ document.getElementById('btn-rand').addEventListener('click', function () {
     results = Array.from(picked);
   }
   document.getElementById('num-result').textContent = results.join('，');
+  ensureAudio();
+  sfxDing();
 });
 
 // ---- 图片导入（相册/文件 → 裁剪编辑器 → 压缩为 dataURL） ----
@@ -2713,6 +3273,9 @@ document.getElementById('btn-import').addEventListener('click', function () {
 // 初始化
 renderDraftColors();
 renderAll();
+renderSfxRows();
+// 预解码已保存的自定义音效，避免第一次播放时没声音
+Object.keys(customSfx).forEach(function (slot) { decodeSfx(slot, customSfx[slot]); });
 
 // ---- PWA：注册 Service Worker（离线缓存） ----
 if ('serviceWorker' in navigator) {
