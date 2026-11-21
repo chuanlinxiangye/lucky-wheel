@@ -713,6 +713,24 @@
   </section>
 
   <section>
+    <h2>盘面外观</h2>
+    <label for="wheel-font">盘面字体（扇形上的文字）</label>
+    <select id="wheel-font"></select>
+
+    <label for="wheel-label-color" style="margin-top:12px">文字颜色</label>
+    <select id="wheel-label-color"></select>
+    <div id="wheel-custom-color-row" style="margin-top:8px;display:none">
+      <label for="wheel-custom-color">自定义颜色</label>
+      <input type="color" id="wheel-custom-color" value="#ffffff"
+        style="width:100%;height:44px;padding:4px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2)">
+    </div>
+
+    <label for="wheel-needle" style="margin-top:12px">指针样式</label>
+    <select id="wheel-needle"></select>
+    <p class="muted" style="margin-top:10px">字体和字色只改扇形上的文字，不动界面按钮，避免排版错乱。指针颜色跟着当前主题的强调色走；选「盘外顶部标记」时盘面会自动缩一点给它让位。</p>
+  </section>
+
+  <section>
     <h2>当前转盘设置</h2>
     <label class="checkbox-row">
       <input type="checkbox" id="remove-winner">
@@ -878,6 +896,7 @@
         <li><b>扇形贴图</b>：点选项旁的「🖼」，选一张图后进入裁剪编辑器——编辑器里那块<b>扇形就是最终贴在轮盘上的那一块</b>，形状由当前选项数决定（比如 6 个选项就是 60°），转到哪个方向都不变形、不换位置，只是跟着轮盘一起转。拖动平移、双指捏合缩放、旋转/翻转都是在调整构图。确认后贴进那个扇形；再点一次可选「更换」或「清除」。</li>
         <li><b>两种贴图方式</b>（在设置抽屉里切换，全局生效）：<b>整块铺满</b>（默认）——图等比放大到把整块扇形填满、不留底色，超出扇形的部分裁掉，扇形看起来"本身就是这张图"；<b>整张留边</b>——图等比缩小到整张塞进扇形里，四周露出扇区底色。窄扇区（选项很多）时铺满模式只截取图片中间一条竖带，属于正常现象，想看到整张图就切到留边。</li>
         <li><b>主题换肤</b>：在「⚙️ 设置」抽屉里下拉切换 10 种配色，整页按钮、指针、中心点都会跟着变色。「新建主题」可选多色自选或单色渐变（选一个颜色自动生成深浅，选项越多渐变越顺滑）。</li>
+        <li><b>盘面外观</b>：「⚙️ 设置 → 盘面外观」里可以换三样东西——<b>盘面字体</b>（雅黑 / 黑体 / 宋体 / 楷体 / 圆体 / 等宽，选中的那项下拉里会直接用该字体预览）、<b>文字颜色</b>（白字深描边、黑字白描边、跟随主题色、或自己挑一个颜色——浅色自动配黑描边、深色自动配白描边）、<b>指针样式</b>（细针小箭头 / 大箭头 / 圆点粗针 / 盘外顶部标记）。只影响扇形上的文字和指针，界面按钮不受影响，免得排版错乱。</li>
         <li><b>音效</b>：转动、抛硬币、摇骰子、切页面都有声音，详见下面「🔊 音效」一节。</li>
         <li><b>淘汰制</b>：勾选「转中后自动移除该选项」，适合多人轮流淘汰。</li>
         <li><b>分享</b>：「生成分享码」会把当前转盘和它跳转链上的所有转盘打包成一串码，发给朋友；对方在「导入转盘」里粘贴即可得到一模一样的转盘——<b>配色、扇形贴图、硬币正反面、自定义音效、音效风格和音量都一起带过去</b>。上面两个勾选框可以决定要不要连图片、连音效，纯文字分享就把两个都取消。带图片音频的码会比较长，选择「存成文件」发 .txt 比复制粘贴更稳。</li>
@@ -2019,12 +2038,187 @@ function imgFitMode() {
   return localStorage.getItem(IMG_FIT_KEY) === 'whole' ? 'whole' : 'fill';
 }
 
+// ---- 盘面外观：字体、字色、指针样式（全局设置，所有转盘共用） ----
+
+const APPEARANCE_KEY = 'wheel_appearance_v1';
+
+/** 字体选项：每项给一串跨平台字体栈，安卓/iOS/Windows 各取各能用的那个 */
+const FONT_FAMILIES = {
+  yahei: { name: '系统默认（雅黑 / 苹方）', css: '"Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif' },
+  hei: { name: '黑体（粗壮醒目）', css: 'SimHei, "Heiti SC", "Noto Sans CJK SC", sans-serif' },
+  song: { name: '宋体（衬线、书卷气）', css: '"Songti SC", SimSun, "Noto Serif CJK SC", Georgia, serif' },
+  kai: { name: '楷体（手写感）', css: 'KaiTi, "Kaiti SC", STKaiti, "Noto Serif CJK SC", serif' },
+  yuan: { name: '圆体（圆润柔和）', css: 'YouYuan, "Yuanti SC", "PingFang SC", "Microsoft YaHei", sans-serif' },
+  mono: { name: '等宽（机械 / 数字感）', css: 'Consolas, "Courier New", "Noto Sans Mono", monospace' }
+};
+
+/** 字色方案：auto 白字深描边、dark 黑字白描边、accent 跟随主题、custom 自定义 */
+const LABEL_COLORS = {
+  auto: { name: '白字 + 深描边（默认，最稳）' },
+  dark: { name: '黑字 + 白描边' },
+  accent: { name: '跟随主题强调色' },
+  custom: { name: '自定义颜色' }
+};
+
+/** 指针样式 */
+const NEEDLE_STYLES = {
+  classic: { name: '细针 + 小箭头（默认）' },
+  arrow: { name: '大箭头（无针）' },
+  dot: { name: '圆点 + 粗针' },
+  mark: { name: '盘外顶部标记' }
+};
+
+/** @returns {any} */
+function loadAppearance() {
+  const def = { font: 'yahei', color: 'auto', customColor: '#ffffff', needle: 'classic' };
+  try {
+    const p = JSON.parse(localStorage.getItem(APPEARANCE_KEY) || '{}') || {};
+    return {
+      font: FONT_FAMILIES[p.font] ? p.font : def.font,
+      color: LABEL_COLORS[p.color] ? p.color : def.color,
+      customColor: /^#[0-9a-fA-F]{6}$/.test(p.customColor || '') ? p.customColor : def.customColor,
+      needle: NEEDLE_STYLES[p.needle] ? p.needle : def.needle,
+    };
+  } catch (e) {
+    return def;
+  }
+}
+
+/** @type {{ font: string, color: string, customColor: string, needle: string }} */
+let appearance = loadAppearance();
+
+function saveAppearance() {
+  try {
+    localStorage.setItem(APPEARANCE_KEY, JSON.stringify(appearance));
+  } catch (e) {
+    /* 存不下就算了，本次会话仍然有效 */
+  }
+}
+
+/** 相对亮度，用来决定自定义字色该配黑描边还是白描边 */
+function hexLum(hex) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** 按当前设置算出扇形文字的填充色与描边 */
+function labelStyle(theme) {
+  const accent = (theme && theme.accent) || '#2563eb';
+  if (appearance.color === 'dark') return { fill: '#1e293b', stroke: 'rgba(255,255,255,0.92)' };
+  if (appearance.color === 'accent') return { fill: accent, stroke: '#ffffff' };
+  if (appearance.color === 'custom') {
+    const c = appearance.customColor;
+    return { fill: c, stroke: hexLum(c) > 0.62 ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.92)' };
+  }
+  return { fill: '#ffffff', stroke: 'rgba(0,0,0,0.45)' };
+}
+
+/** 指针半径占盘面半径的比例（mark 样式盘面要缩小，给外侧标记让位） */
+function needleTrim() {
+  return appearance.needle === 'mark' ? 26 : 0;
+}
+
+/**
+ * 画指针（固定指向正上方）
+ * @param {CanvasRenderingContext2D} ctx
+ */
+function drawNeedle(ctx, cx, cy, radius, accent) {
+  const dark = accentDarker(accent);
+  const style = appearance.needle;
+
+  if (style === 'arrow') {
+    // 一枚厚实的三角箭头，底边略窄，压在盘面上
+    const tip = cy - radius * 0.62;
+    const base = cy - radius * 0.3;
+    ctx.beginPath();
+    ctx.moveTo(cx, tip);
+    ctx.lineTo(cx - 16, base);
+    ctx.lineTo(cx, base + 16);
+    ctx.lineTo(cx + 16, base);
+    ctx.closePath();
+    ctx.fillStyle = dark;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    return;
+  }
+
+  if (style === 'dot') {
+    const tip = cy - radius * 0.55;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx, tip);
+    ctx.strokeStyle = dark;
+    ctx.lineWidth = 9;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, tip, 9, 0, TAU);
+    ctx.fillStyle = dark;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, 14, 0, TAU);
+    ctx.fillStyle = accent;
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    return;
+  }
+
+  if (style === 'mark') {
+    // 盘外顶部一个倒三角，尖朝下指着盘面；盘面已在 drawWheel 里缩小腾出空间
+    const tip = cy - radius - 6;
+    const top = cy - radius - 30;
+    ctx.beginPath();
+    ctx.moveTo(cx, tip);
+    ctx.lineTo(cx - 15, top);
+    ctx.lineTo(cx + 15, top);
+    ctx.closePath();
+    ctx.fillStyle = dark;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    return;
+  }
+
+  // classic：细针 + 小箭头 + 中心圆点（原样）
+  const needleTip = cy - radius * 0.6;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 14);
+  ctx.lineTo(cx, needleTip);
+  ctx.strokeStyle = dark;
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(cx, needleTip - 14);
+  ctx.lineTo(cx - 9, needleTip + 2);
+  ctx.lineTo(cx + 9, needleTip + 2);
+  ctx.closePath();
+  ctx.fillStyle = dark;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, 12, 0, TAU);
+  ctx.fillStyle = accent;
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+}
+
 function drawWheel() {
   const tab = currentTab();
   const theme = getTheme(tab.themeId);
   const W = canvas.width, H = canvas.height;
   const cx = W / 2, cy = H / 2;
-  const radius = Math.min(W, H) / 2 - 14;
+  const radius = Math.min(W, H) / 2 - 14 - needleTrim();
   const n = tab.items.length;
   const angle = angleByTab.get(tab.id);
   const startAngle = (angle === undefined || angle === null) ? 0 : angle;
@@ -2104,47 +2298,23 @@ function drawWheel() {
     ctx.rotate(a0 + slice / 2);
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    // 统一白字 + 深色描边：任何扇区颜色（含浅色和贴图）上都清晰
-    ctx.fillStyle = '#fff';
+    // 字色 + 描边按「盘面外观」里的设置来（默认白字深描边，任何底色上都清晰）
     const weight = tab.items[i].weight;
     const label = weight !== 1 ? tab.items[i].name + ' ×' + weight : tab.items[i].name;
-    ctx.font = '600 ' + (n > 16 ? 15 : n > 10 ? 18 : 21) + 'px "Microsoft YaHei", sans-serif';
+    const family = (FONT_FAMILIES[appearance.font] || FONT_FAMILIES.yahei).css;
+    ctx.font = '600 ' + (n > 16 ? 15 : n > 10 ? 18 : 21) + 'px ' + family;
+    const lab = labelStyle(theme);
     ctx.lineWidth = 3;
     ctx.lineJoin = 'round';
-    ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+    ctx.strokeStyle = lab.stroke;
     ctx.strokeText(truncate(label, 12), radius - 14, 0);
+    ctx.fillStyle = lab.fill;
     ctx.fillText(truncate(label, 12), radius - 14, 0);
     ctx.restore();
   }
 
-  // 中心转针：中心一个小圆点，细针延伸到半径 60% 处，末端小箭头指向正上方
-  // 颜色跟随当前主题的强调色（整页换肤）
-  const uiAccent = theme.accent || '#2563eb';
-  const uiAccentDark = accentDarker(uiAccent);
-  const needleTip = cy - radius * 0.6;
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - 14);
-  ctx.lineTo(cx, needleTip);
-  ctx.strokeStyle = uiAccentDark;
-  ctx.lineWidth = 4;
-  ctx.lineCap = 'round';
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(cx, needleTip - 14);
-  ctx.lineTo(cx - 9, needleTip + 2);
-  ctx.lineTo(cx + 9, needleTip + 2);
-  ctx.closePath();
-  ctx.fillStyle = uiAccentDark;
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(cx, cy, 12, 0, TAU);
-  ctx.fillStyle = uiAccent;
-  ctx.fill();
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 3;
-  ctx.stroke();
+  // 中心指针：样式可选（细针 / 大箭头 / 圆点粗针 / 盘外标记），颜色跟随主题强调色
+  drawNeedle(ctx, cx, cy, radius, theme.accent || '#2563eb');
 }
 
 /** @type {(s: string, max: number) => string} */
@@ -2896,6 +3066,68 @@ imgFitSelect.addEventListener('change', function () {
   localStorage.setItem(IMG_FIT_KEY, imgFitSelect.value === 'whole' ? 'whole' : 'fill');
   drawWheel();
   toast(imgFitSelect.value === 'whole' ? '贴图方式：整张留边' : '贴图方式：整块铺满');
+});
+
+// ---- 盘面外观：字体 / 字色 / 指针样式 ----
+const fontSelect = /** @type {HTMLSelectElement} */ (document.getElementById('wheel-font'));
+Object.keys(FONT_FAMILIES).forEach(function (id) {
+  const opt = document.createElement('option');
+  opt.value = id;
+  opt.textContent = FONT_FAMILIES[id].name;
+  opt.style.fontFamily = FONT_FAMILIES[id].css;
+  fontSelect.appendChild(opt);
+});
+fontSelect.value = appearance.font;
+
+const labelColorSelect = /** @type {HTMLSelectElement} */ (document.getElementById('wheel-label-color'));
+Object.keys(LABEL_COLORS).forEach(function (id) {
+  const opt = document.createElement('option');
+  opt.value = id;
+  opt.textContent = LABEL_COLORS[id].name;
+  labelColorSelect.appendChild(opt);
+});
+labelColorSelect.value = appearance.color;
+
+const customColorRow = document.getElementById('wheel-custom-color-row');
+const customColorInput = /** @type {HTMLInputElement} */ (document.getElementById('wheel-custom-color'));
+customColorInput.value = appearance.customColor;
+
+const needleSelect = /** @type {HTMLSelectElement} */ (document.getElementById('wheel-needle'));
+Object.keys(NEEDLE_STYLES).forEach(function (id) {
+  const opt = document.createElement('option');
+  opt.value = id;
+  opt.textContent = NEEDLE_STYLES[id].name;
+  needleSelect.appendChild(opt);
+});
+needleSelect.value = appearance.needle;
+
+function syncCustomColorRow() {
+  if (customColorRow) customColorRow.style.display = appearance.color === 'custom' ? '' : 'none';
+}
+syncCustomColorRow();
+
+fontSelect.addEventListener('change', function () {
+  appearance.font = FONT_FAMILIES[fontSelect.value] ? fontSelect.value : 'yahei';
+  saveAppearance();
+  drawWheel();
+  toast('盘面字体：' + FONT_FAMILIES[appearance.font].name);
+});
+labelColorSelect.addEventListener('change', function () {
+  appearance.color = LABEL_COLORS[labelColorSelect.value] ? labelColorSelect.value : 'auto';
+  saveAppearance();
+  syncCustomColorRow();
+  drawWheel();
+});
+customColorInput.addEventListener('input', function () {
+  appearance.customColor = customColorInput.value;
+  saveAppearance();
+  drawWheel();
+});
+needleSelect.addEventListener('change', function () {
+  appearance.needle = NEEDLE_STYLES[needleSelect.value] ? needleSelect.value : 'classic';
+  saveAppearance();
+  drawWheel();
+  toast('指针样式：' + NEEDLE_STYLES[appearance.needle].name);
 });
 
 themeSelect.addEventListener('change', function () { setTheme(themeSelect.value); });
